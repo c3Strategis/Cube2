@@ -1,0 +1,71 @@
+<div>
+    @if(dataFormConfig().visible) {
+    @for (dataField of dataFormConfig().dataFields; track $index) {
+    @if(dataField.type == 'integer' || dataField.type == 'smallint' || dataField.type == 'bigint' || dataField.type ==
+    'double precision') {
+    <!-- <div *ngIf="!dataForm.constraints"> -->
+    <mat-form-field style="width:90%">
+        <mat-label>{{dataField.field}}</mat-label>
+        <input matInput [disabled]="!dataFormConfig().editMode" [id]="dataField.field" ngModel autocomplete='off'
+            placeholder="{{dataField.field}}" [matTooltip]="dataField.description!" [(ngModel)]="dataField.value"
+            (change)="dataField.changed = true" (blur)="updateDataForm(dataField)">
+
+    </mat-form-field>
+    <!-- </div> -->
+    <!-- <div *ngIf="dataForm.constraints">
+                            <mat-form-field>
+                              <mat-label>{{dataForm.field}}</mat-label>
+                              <mat-select [(value)]="dataForm.value" (selectionChange)="dataForm.changed = true; updateDataForm(dataForm)">
+                                <mat-option *ngFor="let constraint of dataForm.constraints" [(value)]="constraint.name">{{constraint.name}}</mat-option>
+                              </mat-select>
+                            </mat-form-field>
+                          </div> -->
+    <!-- </div> -->
+    }
+    @if(dataField.type == 'boolean') {
+    <mat-checkbox [disabled]="!dataFormConfig().editMode" [(ngModel)]="dataField.value"
+        [matTooltip]="dataField.description!"
+        (change)="dataField.changed = true; updateDataForm(dataField)">{{dataField.field}}</mat-checkbox>
+    <br>
+    }
+    @if(dataField.type == 'text' || dataField.type == 'character varying') {
+    <!-- <div *ngIf="!dataForm.constraints"> -->
+    <mat-form-field style="width:90%">
+        <mat-label>{{dataField.field}}</mat-label>
+
+        <input type="text" matInput autocomplete='off' rows="3" [disabled]="!dataFormConfig().editMode"
+            [id]="dataField.field" ngModel placeholder="{{dataField.field}}" [(ngModel)]="dataField.value"
+            (change)="changeTextField(dataField)" (blur)="updateDataForm(dataField)">
+    </mat-form-field><br>
+    <!-- <div *ngFor="let link of dataForm.links">
+                    <div><a target="_blank" [href]="link.url">Link</a> </div>
+                </div> -->
+    <!-- </div> -->
+    <!-- <div *ngIf="dataForm.constraints">
+                <mat-form-field style="width:90%">
+                    <mat-label>{{dataForm.field}}</mat-label>
+                    <mat-select [(value)]="dataForm.value"
+                        (selectionChange)="dataForm.changed = true; updateDataForm(dataForm)">
+                        <mat-option *ngFor="let constraint of dataForm.constraints"
+                            [(value)]="constraint.name">{{constraint.name}}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div> -->
+    }
+
+
+    @if(dataField.type == 'date' || dataField.type == 'timestamp with time zone') {
+        {{dataField.value}}
+    <mat-form-field style="width:90%">
+        <mat-label>{{dataField.field}}</mat-label>
+
+        <input matInput [disabled]="!dataFormConfig().editMode" [matDatepicker]="picker"
+            [matTooltip]="dataField.description!" placeholder="{{dataField.field}}" [value]="dataField.value"
+            (dateChange)="dataField.changed = true; updateDataForm(dataField)">
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+    }
+
+    }
+    }

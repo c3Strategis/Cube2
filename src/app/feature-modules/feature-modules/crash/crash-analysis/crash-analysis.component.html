@@ -1,0 +1,290 @@
+<div class="container" style="height:100%">
+
+  <mat-button-toggle-group #group="matButtonToggleGroup" name="fontStyle" aria-label="Font Style">
+    <mat-button-toggle value="location">Location, Time, Agency</mat-button-toggle>
+    <mat-button-toggle value="vehicles">Vehicles, Injuries, Fatalities</mat-button-toggle>
+    <mat-button-toggle value="characteristics">Roadway Characteristics</mat-button-toggle>
+    <mat-button-toggle value="environment">Environment</mat-button-toggle>
+    <mat-button-toggle value="details">Crash Details</mat-button-toggle>
+    <mat-button-toggle value="conditions">Roadway Conditions</mat-button-toggle>
+    <mat-button-toggle value="records">Record Keeping</mat-button-toggle>
+    <mat-button-toggle value="boxes">Crash Boxes</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  <div style="width:75%">
+    @if(group.value=='location') {
+    <div>
+      <mat-form-field>
+        <mat-label>Start Date</mat-label>
+        <input matInput [matDatepicker]="startdate" [value]="filter.startdate" (dateChange)="changeStartDate($event)">
+        <mat-hint>MM/DD/YYYY</mat-hint>
+        <mat-datepicker-toggle matIconSuffix [for]="startdate"></mat-datepicker-toggle>
+        <mat-datepicker #startdate></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>End Date</mat-label>
+        <input matInput [matDatepicker]="enddate" [value]="filter.enddate" (dateChange)="changeEndDate($event)">
+        <mat-hint>MM/DD/YYYY</mat-hint>
+        <mat-datepicker-toggle matIconSuffix [for]="enddate"></mat-datepicker-toggle>
+        <mat-datepicker #enddate></mat-datepicker>
+      </mat-form-field><br>
+      <mat-form-field style="width:25%">
+        <mat-label>Jurisdictions</mat-label>
+        <mat-select [(ngModel)]="filter.jurisdition" (ngModelChange)="update()" multiple>
+          @for (city of listData.citiesList; track city) {
+          <mat-option [value]="city">{{city}}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field style="width:50%">
+        <mat-label>Agency</mat-label>
+        <mat-select [(ngModel)]="filter.agency" (ngModelChange)="update()" multiple>
+          @for (agency of listData.agencyList; track agency) {
+          <mat-option [value]="agency">{{agency}}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    }
+    @if(group.value=='vehicles') {
+    <div class="txt">
+      <mat-form-field style="width:150px">
+        <mat-label>Operator</mat-label>
+        <mat-select [(ngModel)]="filter.trailers_operator" (selectionChange)="update()">
+          <mat-option value="gt">Greater Than</mat-option>
+          <mat-option value="eq">Equal</mat-option>
+          <mat-option value="lt">Less Than</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field style="width:150px">
+        <mat-label>Trailers</mat-label>
+        <input matInput [(ngModel)]="filter.trailers" (change)="update()">
+      </mat-form-field>
+      <mat-form-field style="width:150px">
+        <mat-label>Operator</mat-label>
+        <mat-select [(ngModel)]="filter.vehicles_operator" (selectionChange)="update()">
+          <mat-option value="gt">Greater Than</mat-option>
+          <mat-option value="eq">Equal</mat-option>
+          <mat-option value="lt">Less Than</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field style="width:150px">
+        <mat-label>Vehicles</mat-label>
+        <input matInput [(ngModel)]="filter.vehicles" (change)="update()">
+      </mat-form-field>
+      <mat-form-field style="width:150px">
+        <mat-label>Operator</mat-label>
+        <mat-select [(ngModel)]="filter.injuries_operator" (selectionChange)="update()">
+          <mat-option value="gt">Greater Than</mat-option>
+          <mat-option value="eq">Equal</mat-option>
+          <mat-option value="lt">Less Than</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field style="width:150px">
+        <mat-label>Injuries</mat-label>
+        <input matInput [(ngModel)]="filter.injuries" (change)="update()">
+      </mat-form-field>
+      <mat-form-field style="width:150px">
+        <mat-label>Operator</mat-label>
+        <mat-select [(ngModel)]="filter.fatalities_operator" (selectionChange)="update()">
+          <mat-option value="gt">Greater Than</mat-option>
+          <mat-option value="eq">Equal</mat-option>
+          <mat-option value="lt">Less Than</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field style="width:150px">
+        <mat-label>Fatalities</mat-label>
+        <input matInput [(ngModel)]="filter.fatalities" (change)="update()">
+      </mat-form-field><br>
+      Leave blank to disregard
+    </div>
+    }
+    @if(group.value=='characteristics') {
+    <div>
+      <mat-form-field style="width:400px">
+        <mat-label>Roadway Class</mat-label>
+        <mat-select (selectionChange)="update()" [(ngModel)]='this.filter.roadway_class' multiple>
+          @for (class of listData.roadway_classList; track class) {
+          <mat-option [value]="class">{{class}}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field style="width:300px">
+        <mat-label>Roadway Character</mat-label>
+        <mat-select [(ngModel)]="filter.road_character" (ngModelChange)="update()" multiple>
+          @for (roadCharacter of this.listData.roadCharacterList; track roadCharacter) {
+          <mat-option [value]="roadCharacter">{{roadCharacter}}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field style="width:300px">
+        <mat-label>Roadway Junction Type</mat-label>
+        <mat-select [(ngModel)]="filter.roadway_junction_type" (ngModelChange)="update()" multiple>
+          @for (roadwayJunctionType of this.listData.roadwayJunctionTypeList; track roadwayJunctionType) {
+          <mat-option [value]="roadwayJunctionType">{{roadwayJunctionType}}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    }
+    @if(group.value=='environment') {
+      <div class="txt">
+        <mat-form-field style="width:25%">
+          <mat-label>Light Condition</mat-label>
+          <mat-select [(ngModel)]="filter.light_condition" (ngModelChange)="update()" multiple>
+            @for (lighting of listData.lightConditionList; track lighting) {
+            <mat-option [value]="lighting">{{lighting}}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field style="width:25%">
+          <mat-label>Weather Condition</mat-label>
+          <mat-select [(ngModel)]="filter.weather_conditions" (ngModelChange)="update()" multiple>
+            @for (weather of listData.weatherConditionsList; track weather) {
+            <mat-option [value]="weather">{{weather}}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    }
+    @if(group.value=='details') {
+    <div class="txt">
+      <table>
+        <tr>
+          <td>
+            Deer<br>
+            <mat-button-toggle-group [(ngModel)]="filter.deer" aria-label="Font Style" (ngModelChange)="update()">
+              <mat-button-toggle value="All">All</mat-button-toggle>
+              <mat-button-toggle value="Deer">Deer Only</mat-button-toggle>
+              <mat-button-toggle value="None">No Deer</mat-button-toggle>
+            </mat-button-toggle-group>
+          </td>
+          <td>
+            Aggressive Driving<br>
+            <mat-button-toggle-group [(ngModel)]="filter.aggressive_driving" aria-label="Font Style" (ngModelChange)="update()">
+              <mat-button-toggle value="X">All</mat-button-toggle>
+              <mat-button-toggle value="Y">Yes</mat-button-toggle>
+              <mat-button-toggle value="N">No</mat-button-toggle>
+              <mat-button-toggle value="">Unknown</mat-button-toggle>
+            </mat-button-toggle-group>
+          </td>
+          <td>
+            Hit and Run<br>
+            <mat-button-toggle-group [(ngModel)]="filter.hit_and_run" aria-label="Font Style" (ngModelChange)="update()">
+              <mat-button-toggle value="X">All</mat-button-toggle>
+              <mat-button-toggle value="Y">Yes</mat-button-toggle>
+              <mat-button-toggle value="N">No</mat-button-toggle>
+              <mat-button-toggle value="">Unknown</mat-button-toggle>
+            </mat-button-toggle-group>
+          </td>
+          <td>
+            School Zone<br>
+            <mat-button-toggle-group [(ngModel)]="filter.school_zone" aria-label="Font Style" (ngModelChange)="update()">
+              <mat-button-toggle value="X">All</mat-button-toggle>
+              <mat-button-toggle value="Y">Yes</mat-button-toggle>
+              <mat-button-toggle value="N">No</mat-button-toggle>
+              <mat-button-toggle value="">Unknown</mat-button-toggle>
+            </mat-button-toggle-group>
+          </td>
+          <td>
+            Vulnerable Road Users<br>
+            <mat-button-toggle-group [(ngModel)]="filter.vulnerable_road_user" aria-label="Font Style" (ngModelChange)="update()">
+              <mat-button-toggle value="X">All</mat-button-toggle>
+              <mat-button-toggle value="Y">Yes</mat-button-toggle>
+              <mat-button-toggle value="N">No</mat-button-toggle>
+            </mat-button-toggle-group>
+          </td>
+        </tr>
+        <td colspan="2">
+          <mat-form-field style="width:100%">
+            <mat-label>Primary Factor</mat-label>
+            <mat-select [(ngModel)]="filter.primary_factor" (ngModelChange)="update()" multiple>
+              @for (primaryFactor of this.listData.primaryFactorList; track primaryFactor) {
+              <mat-option [value]="primaryFactor">{{primaryFactor}}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </td>
+        <td colspan="2">
+          <mat-form-field style="width:100%">
+            <mat-label>Manner of Collision</mat-label>
+            <mat-select [(ngModel)]="filter.manner_of_collision" (ngModelChange)="update()" multiple>
+              @for (mannerOfCollision of this.listData.mannerOfCollisionList; track mannerOfCollision) {
+              <mat-option [value]="mannerOfCollision">{{mannerOfCollision}}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </td>
+      </table>
+      <br>
+    </div>
+    }
+    @if(group.value=='conditions') {
+    <div class="txt">
+      <table><tr>
+        <td>
+          Rumble Strips<br>
+          <mat-button-toggle-group [(ngModel)]="filter.school_zone" aria-label="Font Style" (ngModelChange)="update()">
+            <mat-button-toggle value="X">All</mat-button-toggle>
+            <mat-button-toggle value="Y">Yes</mat-button-toggle>
+            <mat-button-toggle value="N">No</mat-button-toggle>
+            <mat-button-toggle value="">Unknown</mat-button-toggle>
+          </mat-button-toggle-group>
+        </td>
+        <td>
+          Construction Zone<br>
+          <mat-button-toggle-group [(ngModel)]="filter.construction_zone" aria-label="Font Style" (ngModelChange)="update()">
+            <mat-button-toggle value="X">All</mat-button-toggle>
+            <mat-button-toggle value="Y">Yes</mat-button-toggle>
+            <mat-button-toggle value="N">No</mat-button-toggle>
+            <mat-button-toggle value="">Unknown</mat-button-toggle>
+          </mat-button-toggle-group>
+        </td>
+        </tr>
+        <tr>
+       <td>
+        <mat-form-field style="width:200px">
+          <mat-label>Surface Condition</mat-label>
+          <mat-select [(ngModel)]="filter.surface_condition" (ngModelChange)="update()" multiple>
+            @for (surfaceCondition of this.listData.surfaceConditionList; track surfaceCondition) {
+            <mat-option [value]="surfaceCondition">{{surfaceCondition}}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        </td>
+        <td>
+          <mat-form-field style="width:200px">
+            <mat-label>Construction Type</mat-label>
+            <mat-select [(ngModel)]="filter.construction_type" (ngModelChange)="update()" multiple>
+              @for (constructionType of this.listData.constructionTypeList; track constructionType) {
+              <mat-option [value]="constructionType">{{constructionType}}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          </td>         
+      </tr>
+    </table>
+    </div>
+    }
+    @if(group.value=='records') {
+    <div>
+      Records
+    </div>
+    }
+    @if(group.value != 'boxes') {
+      <div class="container" style="position:absolute; bottom:0px; width:75%;"><app-line-chart #child
+        [datas]='this.filteredCollisions' [filter]="filter" [l]="listData" [i]="drivers"></app-line-chart></div>
+    }
+    @if(group.value == 'boxes') {
+      <div class="container" style="position:absolute; bottom:0px; width:75%;"><app-crash-boxes #child
+        [fc]='this.filteredCollisions' [c]='this.jurisdictionCollisions' [l]="listData" [cbc]="cbc"></app-crash-boxes></div>
+    }
+  </div>
+  <div class="txt" style="position: absolute; height: 100%; top:0px; right:0px; width:25%; overflow-y:auto">
+    <app-statistics [fc]='this.filteredCollisions' [c]='this.jurisdictionCollisions' [l]="listData" [filter]="filter"></app-statistics>
+  </div>
+  <!-- <div><button mat-button (click)="loadData()">Load Data</button></div> -->
+  <!-- <div><button mat-button (click)="child.renderChart()">Load Data</button></div> -->
+
+</div>

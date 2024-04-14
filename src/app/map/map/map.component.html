@@ -1,0 +1,82 @@
+<app-header></app-header>
+<!-- <div><button style="color:rgb(0, 0, 0); background-color:#ffffff; right:0;" mat-button id="configid" (click)="openCrashConfig()"
+        class="btn btn-primary">Open Analysis</button></div><br>
+<div><button style="color:rgb(0, 0, 0); background-color:#ffffff; position:absolute; bottom:0px" mat-button id="configid" (click)="toggleView()"
+        class="btn btn-primary">Toggle View</button></div> -->
+<div id="mapid"></div>
+<div class="pull-right" style="background: rgb(255, 255, 255); right:0px; position:absolute">
+    <div style="width:300px">
+        <mat-accordion class="example-headers-align">
+            <!-- <mat-expansion-panel disabled="true">
+                <mat-expansion-panel-header>
+                    <mat-panel-title>
+                        <strong>
+                            Pages
+                        </strong>
+                    </mat-panel-title>
+                    <mat-panel-description>
+                        Crash Analysis
+                    </mat-panel-description>
+                </mat-expansion-panel-header>
+                <mat-action-row>
+                    <div style="text-align: left">
+                        <button mat-icon-button>
+                            <mat-icon>filter_tilt_shift</mat-icon>
+                        </button>
+                    </div>
+                </mat-action-row>
+            </mat-expansion-panel> -->
+            <mat-expansion-panel id="layerExpansion">
+                <mat-expansion-panel-header>
+                    <mat-panel-title>
+                        <strong>Layers</strong>
+                    </mat-panel-title>
+                    <mat-panel-description>
+                    </mat-panel-description>
+                </mat-expansion-panel-header>
+
+                <div style="max-height: 50vh">
+                    <mat-radio-group [value]="mapConfig.currentLayer?.layer?.layerName">
+                        @for (UPL of mapConfig.userpagelayers; track $index) {
+                            <mat-radio-button class="example-radio-button"  [disabled]="!UPL.layerShown" [value] = "UPL.layer.layerName" (change)="setCurrentLayer(UPL)">
+                                <mat-slide-toggle color="primary" (change)="toggleLayers(UPL)">
+                                    <span>{{UPL.layer.layerName}}</span>
+                                </mat-slide-toggle>
+                            </mat-radio-button>
+                        }
+                </mat-radio-group>
+                </div>
+                <mat-action-row>
+                    <div style="text-align: left">
+                        <button mat-icon-button matTooltip="Open Crash Config" (click)="openCrashConfig()">
+                            <mat-icon>filter_tilt_shift</mat-icon>
+                        </button>
+                    </div>
+                    <div style="text-align: left">
+                        <button mat-icon-button matTooltip="Draw Crashbox" (click)="drawCrashBox()">
+                            <mat-icon>control_point</mat-icon>
+                        </button>
+                    </div>
+                    <!-- <button mat-icon-button checked="this.mapConfig.CrashBoxLayerShow" matTooltip="Points/Heatmap"
+                        (click)="toggleView()">
+                        <mat-icon>map</mat-icon>
+                    </button> -->
+                </mat-action-row>
+            </mat-expansion-panel>
+        </mat-accordion>
+    </div>
+</div>
+@if(mapConfig.dataFormConfig.visible) {
+    <mat-accordion class="feature-data">
+        <mat-expansion-panel [expanded]="mapConfig.dataFormConfig.expanded">
+            <mat-expansion-panel-header>
+                <!-- header -->
+                <mat-panel-title>
+                    {{mapConfig.dataFormConfig.dataTableTitle}}
+                </mat-panel-title>
+            </mat-expansion-panel-header>
+           
+    <app-data-form style="overflow-x: auto" [dataFormConfig]="mapConfig.dataFormConfig"></app-data-form>
+    </mat-expansion-panel>
+    </mat-accordion>
+}

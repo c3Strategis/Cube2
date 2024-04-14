@@ -1,0 +1,356 @@
+#mapid {
+    position:absolute;
+    top:43px;
+    bottom:0;
+    width:100%;
+    z-index:0;
+}
+
+#configid{
+    position:absolute;
+    top:43px;
+    width:50px;
+    z-index:1;
+}
+  
+  .tool-container {
+    position: absolute;
+    bottom:0px;
+    right: 0px;
+    max-width: 580px;
+    z-index: 1;
+}
+
+.module-container {
+    position: absolute;
+    left: 0px;
+    width: 460px;
+    z-index: 1;
+}
+
+.selected-icon {
+    color:white;
+    background: #000000
+}
+
+.featurelist {
+    position: relative;
+    min-width: 0; /* see link to see why this is needed */
+    max-width: 300px;
+    overflow-y: auto;
+    max-height: 550px;
+}
+
+.featurelist > div {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.example-headers-align .mat-expansion-panel-header-description {
+    justify-content: space-between;
+    align-items: center;
+}
+
+.example-margin {
+    font-weight: normal;
+}
+
+#dropdownMenu1, #dropdownMenu2 {
+    border: 2px solid rgb(26, 117, 255);
+    margin: 25px 15px 0 0;
+    position:absolute;
+    top:26px;
+    height:30px;
+    right:100px;
+    background-color: whitesmoke;
+    -webkit-text-fill-color: black;
+}
+
+.selected {
+    font-weight: bold;
+}
+
+#dropdownMenu1 {
+    top:40px;
+    right:180px;
+}
+
+#ddM1, #ddM2 {
+    position:absolute;
+    top:80px;
+    right:60px;
+}
+
+#ddM1 {
+    top:95px;
+    right:145px;
+}
+
+p {
+    font-size: 102;
+}
+
+.pull-right {
+    padding:0;
+    z-index: 0;
+}
+
+#layerExpansion {
+    margin-top:0;
+}
+
+
+// .leaflet-container.default-enabled {
+//     cursor:default
+// }
+
+// __<<ngThemingMigrationEscapedComment1>>__
+// .leaflet-container.pointer-enabled {
+//     cursor:pointer
+// }
+
+// .leaflet-container.grabbing-enabled {
+//     cursor:grabbing
+// }
+
+// .leaflet-container.grab-enabled {
+//     cursor:grab
+// }
+.example-radio-group {
+    display: inline-flex;
+    flex-direction: column;
+    text-align: left;
+    word-wrap: break-word;
+    overflow: auto;
+}
+
+.example-radio-button {
+    margin: 0px;
+    flex: 1 1 auto; /* make this grow and shrink */
+    min-width: 0; /* see link to see why this is needed */
+    margin-right: 16px;
+}
+
+.loading {
+    font-style: italic;
+}
+
+.example-radio-button > div {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.example-selected-value {
+    margin: 15px 0;
+}
+
+.tooltip {
+    position: relative;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    color: white;
+    padding: 4px 8px;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+.tooltip-measure {
+    opacity: 1;
+    font-weight: bold;
+}
+
+.tooltip-static {
+    background-color: #ffcc33;
+    color: black;
+    border: 1px solid white;
+}
+
+.tooltip-measure:before, .tooltip-static:before {
+    border-top: 6px solid rgba(0, 0, 0, 0.5);
+    border-right: 6px solid transparent;
+    border-left: 6px solid transparent;
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    margin-left: -7px;
+    left: 50%;
+}
+
+.tooltip-static:before {
+    border-top-color: #ffcc33;
+}
+
+.mat-expansion-panel {
+    margin:0;
+}
+
+.custom-class {
+    background: #000000;
+}
+
+app-notification {
+    margin:0;
+    width:300px;
+}
+
+td {
+    text-align: left;
+}
+
+.example-list {
+    width: 500px;
+    max-width: 100%;
+    border: solid 1px #ccc;
+    min-height: 60px;
+    display: block;
+    background: white;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .example-box {
+    padding: 20px 10px;
+    border-bottom: solid 1px #ccc;
+    color: rgba(0, 0, 0, 0.87);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+    cursor: move;
+    background: white;
+    font-size: 14px;
+  }
+
+  .cdk-drag-preview {
+    box-sizing: border-box;
+    border-radius: 4px;
+    box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+                0 8px 10px 1px rgba(0, 0, 0, 0.14),
+                0 3px 14px 2px rgba(0, 0, 0, 0.12);
+  }
+
+  .cdk-drag-placeholder {
+    opacity: 0;
+  }
+
+  .cdk-drag-animating {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+  }
+
+  .example-box:last-child {
+    border: none;
+  }
+
+  .example-list.cdk-drop-list-dragging .example-box:not(.cdk-drag-placeholder) {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+  }
+
+  .example-full-width {
+    width: 90%;
+  }
+  .example-form {
+    min-width: 150px;
+    max-width: 500px;
+    width: 100%;
+  }
+  
+  .feature-data  {
+    flex-basis: 0;
+    width: 354px;
+    overflow-wrap: break-word;
+    overflow-y: auto;
+    background-color: rgba(255,255,255,.7); 
+    display: block; 
+    position: absolute; 
+    bottom: 0px; left: 0px;
+    max-height: 43vh // or 250vh;
+  }
+  
+  .feature-data .mat-expansion-panel-header-description {
+    justify-content: space-between;
+    align-items: center;
+  }
+
+.comment-data  {
+  flex-basis: 0;
+  width: 354px;
+  background-color: rgba(255,255,255,.7); 
+  display: block; 
+  position: absolute; 
+  bottom: 0px; 
+  left: 354px;
+  max-height: 50%;
+}
+
+.comment-data .mat-expansion-panel-header-description {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.message-data {
+    flex-basis: 0;
+    width: 354px;
+    overflow-wrap: break-word;
+    overflow-y: auto;
+    background-color: rgba(255,255,255,.7); 
+    display: block; 
+    position: absolute; 
+    bottom: 0px; left: 0px;
+    max-height: 43vh // or 250vh;
+}
+
+.ol-overlaycontainer-stopevent {
+    position: absolute;
+    bottom: 0px;
+} 
+
+
+
+
+
+.map {
+    width: 100%;
+    height: 400px;
+  }
+  .fullscreen:-webkit-full-screen {
+    height: 100%;
+    margin: 0;
+  }
+
+  .fullscreen:fullscreen {
+    height: 100%;
+  }
+
+  .fullscreen {
+    margin-bottom: 10px;
+    width: 100%;
+    height: 400px;
+  }
+
+  .map .ol-rotate {
+    top: 3em;
+  }
+
+  .map {
+    width: 100%;
+    height: 100%;
+    float: left;
+  }
+
+  .sidepanel {
+    background: #1F6B75;
+    width: 20%;
+    height: 100%;
+    float: left;
+  }
+
+  .sidepanel-title {
+    width: 100%;
+    font-size: 3em;
+    color: #ffffff;
+    display: block;
+    text-align: center;
+  }

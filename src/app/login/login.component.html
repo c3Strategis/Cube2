@@ -1,0 +1,23 @@
+<div class="login-parent">
+    <mat-card class="login-box">
+        <!-- login page header  -->
+        <div class="login-head">
+            <h1>Cube</h1>
+        </div>
+        <!-- form to verify both password and username are filled out to avoid errors -->
+        <form #f="ngForm">
+            <mat-form-field>
+                <mat-label>Email</mat-label>
+                <input matInput type="text" autofocus="autofocus" name="username" [(ngModel)]="user.email"
+                    #username="ngModel" required email placeholder="Email" />
+            </mat-form-field>
+            <mat-form-field>
+                <input matInput id="loginPassword" type="password" name="password" [(ngModel)]="user.password"
+                    #password="ngModel" required password placeholder="Password" />
+            </mat-form-field>
+            <button style="color:white; background-color:#623c65" mat-button id="loginSubmit" (click)="login()"
+                [disabled]="!f.valid" class="btn btn-primary">Login</button>
+            <br>
+        </form>
+    </mat-card>
+</div>

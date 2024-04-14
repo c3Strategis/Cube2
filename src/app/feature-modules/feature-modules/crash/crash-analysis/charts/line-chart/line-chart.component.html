@@ -1,0 +1,25 @@
+<mat-form-field>
+    <mat-label>X-Axis</mat-label>
+    <mat-select [(value)]="duration" (valueChange)="updateChart()">
+      <mat-option value="none">None</mat-option>
+      <mat-option value="year">Year</mat-option>
+      <mat-option value="month">Month of Year</mat-option>
+      <mat-option value="dow">Day of Week</mat-option>
+      <mat-option value="tod">Time of Day</mat-option>
+      <mat-option value="age">Age</mat-option>
+      <mat-option value="agedriver">Age/Driver</mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field>
+    <mat-label>Group By</mat-label>
+    <mat-select [(value)]="series" (valueChange)="updateChart()">
+      <mat-option value="total">Total</mat-option>
+      <mat-option value="severity">Severity</mat-option>
+      <mat-option value="jurisdiction">Jurisdiction</mat-option>
+      <mat-option value="manner_of_collision">Manner of Collision</mat-option>
+      <mat-option value="primary_factor">Primary Factor</mat-option>
+    </mat-select>
+  </mat-form-field>
+<div class="chart-container">
+    <canvas  id="MyChart" >{{ chart }}</canvas>
+</div>
