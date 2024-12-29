@@ -1,0 +1,46 @@
+.on {
+  cursor: pointer;
+  color: green
+}
+
+.off {
+  cursor: pointer;
+  color: white
+}
+
+.demo-table {
+  width: 100%;
+}
+
+.mat-row {
+  height: 10px !important;
+}
+
+.report-text {
+  text-align: left;
+  align-content: center;
+  border: 1px solid #CCC;
+  cursor: pointer
+}
+
+.mat-cell {
+  text-align: left;
+  align-content: center;
+  border: 10px solid #CCC;
+  cursor: pointer;
+  color: blue
+}
+
+// .mat-header-cell {
+//   text-align: left;
+//   align-content: center;
+//   border: 10px solid #CCC;
+//   cursor: pointer
+// }
+
+// .mat-table {
+//   text-align: left;
+//   align-content: center;
+//   border: 10px solid #CCC;
+//   cursor: pointer
+// }

@@ -1,5 +1,5 @@
 import { Server } from './server.model'
-import { MyCubeStyle } from './style.model'
+import { GeoStyle } from './style.model'
 import { UserPageInstance, ModulePermission } from './module.model'
 import { User } from '../../../_models/user.model';
 import { Group } from '../../../_models/group.model';
@@ -16,13 +16,16 @@ export class Layer {
     layerName!: string;
     layerType!: string;
     layerService!: string;
+    layerModule!: string
     layerIdent!: string;
     layerFormat: string = "";
     layerDescription!: string;
     layerGeom!: string;
+    layerProjection: number = 4326
     serverID!: number;
-    server!: Server;
-    defaultStyle!: MyCubeStyle;
+    server: Server = new Server;
+    CQLFilter!: string;
+    defaultStyle!: GeoStyle;
     legendURL!: string;
     dataFormConfig = new DataFormConfig
 }
@@ -55,7 +58,7 @@ export class UserPageLayer {
     userID!: number;
     userPageID!: number;
     layerID!: number;
-    style = new MyCubeStyle;
+    style = new GeoStyle;
     styleString = ''
     olStyle!: any
     layer = new Layer;
@@ -82,7 +85,7 @@ export class UserPageLayer {
 //     myCubeFields: MyCubeField[] = []
 // }
 
-export class MyCubeConstraint {
+export class GeoConstraint {
     name!: string | number;
     option!: string;
 }
@@ -92,7 +95,7 @@ export class DataFieldConstraint {
     option!: string
 }
 
-export class MyCubeField {
+export class GeoField {
     field!: string;
     type!: string;
     description?: string;
@@ -101,7 +104,7 @@ export class MyCubeField {
     label?: boolean;
     changed?: boolean;
     links?: any[]
-    constraints? = new Array<MyCubeConstraint>()
+    constraints? = new Array<GeoConstraint>()
 }
 
 // export class DataField {
@@ -114,12 +117,12 @@ export class MyCubeField {
 //     constraints? = new Array<DataFieldConstraint>()
 // }
 
-export class MyCubeURLs {
+export class GeoURLs {
     url!: string;
     anchorTag!: string;
 }
 
-export class MyCubeComment {
+export class GeoComment {
     table!: number | string;
     id!: number;
     userid!: number;

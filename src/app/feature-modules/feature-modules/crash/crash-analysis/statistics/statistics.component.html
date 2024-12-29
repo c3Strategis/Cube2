@@ -1,13 +1,6 @@
-<!-- <mat-form-field>
-    <mat-label>Compare To</mat-label>
-    <mat-select [(value)]="cityValue" (valueChange)="selectJurisdiction($event)">
-      @for (city of citiesList(); track city) {
-        <mat-option [value]="city">{{city}}</mat-option>
-      }
-    </mat-select>
-  </mat-form-field> -->
 <div style="overflow-y:auto">
 <h3>Crash Statistics</h3>
+@if(this.filter().crashBox.name) {<u>{{this.filter().crashBox.name}}</u><br>}
 @if (this.filteredCollisions().length) {
 Crashes: {{filteredCollisions().length}} ({{totalCollisionP()}}%)<br>
 Injury Crashes: {{injuryCrashDS()}} ({{injuryCrashPDS()}}%) <span appHighlight
@@ -15,22 +8,24 @@ Injury Crashes: {{injuryCrashDS()}} ({{injuryCrashPDS()}}%) <span appHighlight
 @if(fatalCrash() > 0) {Fatal Crashes: {{fatalCrash()}}<br>}
 @if(this.injuries() > 0) {Injuries: {{this.injuries()}}<br>}
 @if (this.fatalities() > 0) {Fatalities: {{this.fatalities()}}<br>}
+@if (this.cost() > 0) {Total Cost: {{this.cost() | currency}}<br>}
 Vulnerable Road Users: {{this.VRUCrash()}}<br>
-Crashes in Jurisdiction: {{totalCollision().length}}<br>
+Crashes in Jurisdiction: {{jurisditionCollisions().length}}<br>
 <br>
 <u>Light Condition</u><br>
 @for (item of listData().lightConditionStat; track $index) {
-<button mat-button (click) = "addFilter(item.name)">+ </button>{{item.name | titlecase}}: {{item.DS}} ({{item.PDS}}%) <span appHighlight [highlightValue]="item.Dev">{{item.Dev}}</span><br>
+<!-- <button mat-button (click) = "addFilter(item.name)">+ </button> -->
+{{item.name | titlecase}}: {{item.DS}} ({{item.PS}}%) <span appHighlight [highlightValue]="item.Dev">{{item.Dev}}</span><br>
 }
 <br>
 <u>Manner of Collision</u><br>
 @for (item of listData().mannerOfCollisionStat; track $index) {
-{{item.name | titlecase}}: {{item.DS}} ({{item.PDS}}%) <span appHighlight [highlightValue]="item.Dev">{{item.Dev}}</span><br>
+{{item.name | titlecase}}: {{item.DS}} ({{item.PS}}%) <span appHighlight [highlightValue]="item.Dev">{{item.Dev}}</span><br>
 }
 <br>
 <u>Primary Factor</u><br>
 @for (item of listData().primaryFactorStat; track $index) {
-{{item.name | titlecase}}: {{item.DS}} ({{item.PDS}}%) <span appHighlight [highlightValue]="item.Dev">{{item.Dev}}</span><br>
+{{item.name | titlecase}}: {{item.DS}} ({{item.PS}}%) <span appHighlight [highlightValue]="item.Dev">{{item.Dev}}</span><br>
 }
 }
 

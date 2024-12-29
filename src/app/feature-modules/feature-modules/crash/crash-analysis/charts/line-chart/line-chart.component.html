@@ -1,8 +1,9 @@
 <mat-form-field>
     <mat-label>X-Axis</mat-label>
-    <mat-select [(value)]="duration" (valueChange)="updateChart()">
+    <mat-select [(value)]="duration" (valueChange)="updateChart()" [disabled]="trafficChange()">
       <mat-option value="none">None</mat-option>
       <mat-option value="year">Year</mat-option>
+      <mat-option value="6monthmovingsum">6 Month Moving Sum</mat-option>
       <mat-option value="month">Month of Year</mat-option>
       <mat-option value="dow">Day of Week</mat-option>
       <mat-option value="tod">Time of Day</mat-option>
@@ -18,8 +19,24 @@
       <mat-option value="jurisdiction">Jurisdiction</mat-option>
       <mat-option value="manner_of_collision">Manner of Collision</mat-option>
       <mat-option value="primary_factor">Primary Factor</mat-option>
+      <mat-option value="kabc">KABC</mat-option>
     </mat-select>
   </mat-form-field>
+  <mat-form-field>
+    <mat-label>Measure By</mat-label>
+    <mat-select [(value)]="measure" (valueChange)="updateChart()">
+      <mat-option value="number">Number of Crashes</mat-option>
+      <mat-option value="cost">Cost</mat-option>
+    </mat-select>
+  </mat-form-field>
+  <!-- <mat-form-field>
+    <mat-label>Chart Type</mat-label>
+    <mat-select [(value)]="type" (valueChange)="updateChart()">
+      <mat-option value="bar">Bar</mat-option>
+      <mat-option value="line">Line</mat-option>
+      <mat-option value="doughnut">Doughnut</mat-option>
+    </mat-select>
+  </mat-form-field> -->
 <div class="chart-container">
     <canvas  id="MyChart" >{{ chart }}</canvas>
 </div>

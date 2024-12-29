@@ -1,0 +1,9 @@
+<!-- This isn't right.  What is shown under "Default" needs to happen only if the module is in the page.  But it's working ok for right now. -->
+@switch (module_show) {
+    @case ('crashanalysis') {
+        <app-crash-analysis [mi]="module_instance"></app-crash-analysis>
+    }
+    @default { 
+        <app-crash-map></app-crash-map>
+    }
+}

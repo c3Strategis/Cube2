@@ -1,3 +1,8 @@
+import { setActiveConsumer } from "@angular/core/primitives/signals"
+import { ListData } from "./config-model"
+import { StatModel } from "./config-model"
+import { Geometry, Point } from "ol/geom"
+
 export class CollisionModel {
     mrn!: number
     agency!: string
@@ -5,7 +10,7 @@ export class CollisionModel {
     county!: string
     township!: boolean
     city!: string
-    colldte!: Date
+    collision_date!: string
     collision_time!: string
     vehicles_involved!: number
     trailers_involved!: number
@@ -21,7 +26,7 @@ export class CollisionModel {
     roadway_id!: string
     intersecting_road!: string
     intersecting_road_number!: string
-    mile_marker!:string
+    mile_marker!: string
     interchange!: string
     corporate_limits!: string
     property_type!: string
@@ -59,22 +64,25 @@ export class CollisionModel {
     state_property_damage!: string
     traffic_control!: string
     narrative!: string
-    points!: string
+    geom!: any
     location_updated!: Date
     location_update_note!: string
     location_update_user!: string
-    VRU!: boolean
+    vru!: number
     id!: number
     createdAt!: string
     updatedAt!: string
+    kabc!: string
+    cost!: number
+    driver1age!: number
 }
 
-export class CrashBoxModel {
-    id!: bigint
+export class CrashBoxModel {  //defaults show up in the crashbox table
+    id: bigint = BigInt(0)
     geom!: string
     fid!: bigint
     int_id!: string
-    name!: string
+    StreetName: string = ""
     area!: string
     legs!: number
     max_approach_speed!: number
@@ -82,16 +90,64 @@ export class CrashBoxModel {
     signalized!: boolean
     divided!: boolean
     light_rating!: number
-    classification!: string
+    Classification!: string
+    Subclassification!: string
     density!: string
-    createdAt!: string
-    updatedAt!: string
-}
-export class CBC {
-    crashBox!: CrashBoxModel
-    collisions: CollisionModel[] = []
+    Owner!: string
 }
 
-export class cbcWrapper {
-    cbcArray!: CBC[]
-  }
+export class CollisionModelWithBoxes extends CollisionModel {
+    CrashBoxID!: number
+}
+
+export class CrashBoxModelWithStats extends CrashBoxModel {
+    totalStat = new StatModel
+    totalCollisions!: number
+    totalCollisionsP!: number
+    totalCost!: number
+    injuryStat = new StatModel
+    injuryCrashDSS!: number
+    injuryCrashT!: number
+    injuryCrashPDSS!: number
+    injuryCrashPT!: number
+    injuryCrashDev!: number
+    fatalStat = new StatModel
+    VRUStat = new StatModel
+    VRUCrash!: number
+    fatalCrash!: number
+    lightConditionStat: StatModel[] = []
+    DARKLIGHTED = new StatModel
+    DARKNOTLIGHTED = new StatModel
+    DAWNDUSK = new StatModel
+    DAYLIGHT = new StatModel
+    UNKNOWN = new StatModel
+    BACKINGCRASH = new StatModel
+    COLLISIONWITHANIMALOTHER = new StatModel
+    COLLISIONWITHDEER = new StatModel
+    COLLISIONWITHOBJECTINROAD = new StatModel
+    HEADONBETWEENTWOMOTORVEHICLES = new StatModel
+    LEFTTURN = new StatModel
+    LEFTRIGHTTURN = new StatModel
+    NONCOLLISION = new StatModel
+    OPPOSITEDIRECTIONSIDESWIPE = new StatModel
+    OTHEREXPLAININNARRATIVE = new StatModel
+    RANOFFROAD = new StatModel
+    REAREND = new StatModel
+    REARTOREAR = new StatModel
+    RIGHTANGLE = new StatModel
+    RIGHTTURN = new StatModel
+    SAMEDIRECTIONSIDESWIPE = new StatModel
+    primaryFactorStat: StatModel[] = []
+    mannerOfCollisionStat: StatModel[] = []
+    injuries!: number
+}
+
+export class TrafficChange {
+    id!: number;
+    start_date!: Date;
+    end_date!: Date;
+    countermeasure!: string
+    description!: string
+    jurisdiction!: string
+}
+

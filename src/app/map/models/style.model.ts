@@ -4,28 +4,28 @@ import { Feature } from 'ol';
 import { FeatureLike } from 'ol/Feature';
 import { Fill, Stroke, Circle as CircleStyle, Style, Text } from 'ol/style';
 
-export class MyCubeFeatureStyle {
+export class GeoFeatureStyle {
     color!: string;
     width!: number;
 }
 
-export class MyCubeFilterFields {
+export class GeoFilterFields {
     column!: string;
     operator!: string;
     value!: string | boolean;
 }
 
-export class MyCubeFilterOperator {
+export class GeoFilterOperator {
     operator!: string;
 }
 
-export class MyCubeStyle {
-    load!: MyCubeFeatureStyle;
-    current!: MyCubeFeatureStyle;
+export class GeoStyle {
+    load!: GeoFeatureStyle;
+    current!: GeoFeatureStyle;
     listLabel!: string;
     showLabel!: boolean;
-    filter = new MyCubeFilterFields;
-    filterOperator!: MyCubeFilterOperator; //not used yet
+    filter = new GeoFilterFields;
+    filterOperator!: GeoFilterOperator; //not used yet
     opacity!: number;
 }
 
@@ -60,14 +60,14 @@ export class MapStyles {
         image: new CircleStyle({
             radius: 5,
             fill: undefined,
-            stroke: new Stroke({ color: '#ff0000', width: 4 })
+            stroke: new Stroke({ color: '#ff0000', width: 2 })
         }),
         fill: new Fill({
-            color: 'rgba(255, 255, 255, 0.6)'
+            color: 'rgba(255, 255, 255, 0.2)'
         }),
         stroke: new Stroke({
             color: '#ff0000',
-            width: 4
+            width: 2
         }),
 
     })
@@ -88,10 +88,34 @@ export class MapStyles {
         }),
     })
 
+    public current = new Style({
+      image: new CircleStyle({
+          radius: 5,
+          fill: undefined,
+          stroke: new Stroke({color: '#319FD3', width: 4})
+      }),
+      fill: new Fill({
+          color: 'rgba(255, 255, 255, 0.6)'
+      }),
+      stroke: new Stroke({
+          color: '#319FD3',
+          width: 4
+      }),
+      text: new Text({
+          font: '12px Calibri,sans-serif',
+          fill: new Fill({
+              color: '#000'
+          }),
+          stroke: new Stroke({
+              color: '#fff',
+              width: 5
+          })
+      })
+  })
+
     public cluster (feature:FeatureLike) {
         const styleCache: any = {}
         const size = feature.get('features').length;
-        console.log(size)
         let style = styleCache[size];
         if (!style) {
           style = new Style({

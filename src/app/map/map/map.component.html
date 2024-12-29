@@ -38,45 +38,82 @@
                 <div style="max-height: 50vh">
                     <mat-radio-group [value]="mapConfig.currentLayer?.layer?.layerName">
                         @for (UPL of mapConfig.userpagelayers; track $index) {
-                            <mat-radio-button class="example-radio-button"  [disabled]="!UPL.layerShown" [value] = "UPL.layer.layerName" (change)="setCurrentLayer(UPL)">
-                                <mat-slide-toggle color="primary" (change)="toggleLayers(UPL)">
-                                    <span>{{UPL.layer.layerName}}</span>
-                                </mat-slide-toggle>
-                            </mat-radio-button>
+                        <mat-radio-button class="example-radio-button" [disabled]="!UPL.layerShown"
+                            [value]="UPL.layer.layerName" (change)="setCurrentLayer(UPL)">
+                            <mat-slide-toggle color="primary" (change)="toggleLayers(UPL)">
+                                <span>{{UPL.layer.layerName}}</span>
+                            </mat-slide-toggle>
+                        </mat-radio-button>
                         }
-                </mat-radio-group>
+                    </mat-radio-group>
                 </div>
                 <mat-action-row>
-                    <div style="text-align: left">
+                    <div style="text-align: right">
                         <button mat-icon-button matTooltip="Open Crash Config" (click)="openCrashConfig()">
                             <mat-icon>filter_tilt_shift</mat-icon>
                         </button>
-                    </div>
-                    <div style="text-align: left">
-                        <button mat-icon-button matTooltip="Draw Crashbox" (click)="drawCrashBox()">
-                            <mat-icon>control_point</mat-icon>
+                        <button mat-icon-button (click)="zoomExtents()">
+                            <mat-icon matTooltip="Return Home">zoom_out_map</mat-icon>
+                        </button>
+                        <button mat-icon-button (click)="toggleBaseMap()">
+                            <mat-icon matTooltip="Satellite Images">map</mat-icon>
                         </button>
                     </div>
-                    <!-- <button mat-icon-button checked="this.mapConfig.CrashBoxLayerShow" matTooltip="Points/Heatmap"
-                        (click)="toggleView()">
-                        <mat-icon>map</mat-icon>
-                    </button> -->
                 </mat-action-row>
+                @if(mapConfig.editmode != "None") {
+                <mat-action-row>
+                    <div style="text-align: right">
+                        @if(mapConfig.editmode == "Point" || mapConfig.editmode == "All") {
+                        <button mat-icon-button (click)="drawFeature('Point')">
+                            <mat-icon matTooltip="Create Point">control_point</mat-icon>
+                        </button>
+                        }
+                        @if(mapConfig.editmode == "Polyline" || mapConfig.editmode == "All") {
+                        <button mat-icon-button (click)="drawFeature('LineString')">
+                            <mat-icon matTooltip="Create Line">timeline</mat-icon>
+                        </button>
+                        }
+                        @if(mapConfig.editmode == "Polygon" || mapConfig.editmode == "All") {
+                        <button mat-icon-button (click)="drawFeature('Polygon')">
+                            <mat-icon matTooltip="Create Polygon">change_history</mat-icon>
+                        </button>
+                        }
+                        @if(mapConfig.selectedFeature) {
+                        <button mat-icon-button (click)="deleteFeature()">
+                            <mat-icon matTooltip="Delete Feature">delete</mat-icon>
+                        </button>
+                        }
+                        <!-- <div style="text-align: left">
+                                <button mat-icon-button matTooltip="Draw Feature" (click)="drawCrashBox()">
+                                    <mat-icon>control_point</mat-icon>
+                                </button>
+                            </div> -->
+                        <!-- <button mat-icon-button checked="this.mapConfig.CrashBoxLayerShow" matTooltip="Points/Heatmap"
+                                (click)="toggleView()">
+                                <mat-icon>map</mat-icon>
+                            </button> -->
+                    </div>
+                </mat-action-row>
+                }
+
+
             </mat-expansion-panel>
         </mat-accordion>
     </div>
 </div>
-@if(mapConfig.dataFormConfig.visible) {
-    <mat-accordion class="feature-data">
-        <mat-expansion-panel [expanded]="mapConfig.dataFormConfig.expanded">
-            <mat-expansion-panel-header>
-                <!-- header -->
-                <mat-panel-title>
-                    {{mapConfig.dataFormConfig.dataTableTitle}}
-                </mat-panel-title>
-            </mat-expansion-panel-header>
-           
-    <app-data-form style="overflow-x: auto" [dataFormConfig]="mapConfig.dataFormConfig"></app-data-form>
+@if(mapConfig.featureDataShow) {
+<mat-accordion class="feature-data">
+    <mat-expansion-panel expanded="true">
+        <mat-expansion-panel-header>
+            <!-- header -->
+            <mat-panel-title>
+                {{mapConfig.currentLayer?.layer?.dataFormConfig?.dataTableTitle}}
+            </mat-panel-title>
+        </mat-expansion-panel-header>
+
+        <app-data-form style="overflow-x: auto" [dataFormConfig]="mapConfig.currentLayer!"
+            (changedForm)="changedForm($event)"></app-data-form>
     </mat-expansion-panel>
-    </mat-accordion>
+</mat-accordion>
 }
+<app-feature-module-connect></app-feature-module-connect>

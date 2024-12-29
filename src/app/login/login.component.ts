@@ -32,7 +32,6 @@ export class LoginComponent {
   public login(): void {
     console.log('logging in')
     this.authenticationService.login(this.user.email.toLocaleLowerCase(), this.user.password).subscribe((response:any) => {
-      console.log(response)
       if(response['token']) {
         localStorage.setItem('currentUser', JSON.stringify({
           userID: response['id'],

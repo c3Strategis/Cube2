@@ -1,0 +1,26 @@
+<div style="position:absolute; bottom:0px; width:75%">
+    <table mat-table [dataSource]="dataSource" matSort (matSortChange)="sortData($event)" [style]="center">
+      @for(column of displayColumns; track column.name) {
+        <ng-container matColumnDef={{column.name}}>
+          <th mat-header-cell *matHeaderCellDef [style]="center">{{column.title}}</th>
+          <td mat-cell *matCellDef="let element" [style]="center" (click)="selectCrashReport(element['id'])" >{{element[column.name]}}</td>
+        </ng-container>
+        }           
+        <tr mat-header-row *matHeaderRowDef="rowDef"></tr>
+    <tr mat-row *matRowDef="let row; columns: rowDef;"></tr>
+    </table>
+    <mat-paginator [pageSizeOptions]="[2, 5]" showFirstLastButtons aria-label="Select page of periodic elements">
+    </mat-paginator>
+</div> 
+<div style="position:absolute; bottom:0px; right:0px; width:25%;overflow-y:auto; text-align: center;">
+  @for(column of displayColumns; track column.name) {
+    @if(column.visible == true) {
+      <span class="on" (click)="toggleDisplayColumns(column)">{{column.title}}</span>
+    }
+    @else {
+      <span class="off" (click)="toggleDisplayColumns(column)">{{column.title}}</span>
+    }
+    <br>
+  }
+  
+</div> 

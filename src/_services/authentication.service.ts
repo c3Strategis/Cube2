@@ -47,8 +47,8 @@ export class AuthenticationService {
      this.options = {
         headers: new HttpHeaders({
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
-            //'Access-Control-Allow-Origin': '*'
+            'Accept': 'application/json',
+            'Access-Control-Allow-Origin': '*'
         })
     }
     return this.options

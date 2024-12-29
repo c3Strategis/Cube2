@@ -1,15 +1,12 @@
 <div>
-    @if(dataFormConfig().visible) {
-    @for (dataField of dataFormConfig().dataFields; track $index) {
-    @if(dataField.type == 'integer' || dataField.type == 'smallint' || dataField.type == 'bigint' || dataField.type ==
-    'double precision') {
+    @for (dataField of dataFormConfig().layer.dataFormConfig.dataFields; track $index) {
+    @if(dataField.type == 'integer' || dataField.type == 'smallint' || dataField.type == 'bigint' || dataField.type == 'double precision') {
     <!-- <div *ngIf="!dataForm.constraints"> -->
     <mat-form-field style="width:90%">
         <mat-label>{{dataField.field}}</mat-label>
-        <input matInput [disabled]="!dataFormConfig().editMode" [id]="dataField.field" ngModel autocomplete='off'
+        <input matInput [disabled]="!dataFormConfig().layer.dataFormConfig.editMode" [id]="dataField.field" ngModel autocomplete='off'
             placeholder="{{dataField.field}}" [matTooltip]="dataField.description!" [(ngModel)]="dataField.value"
             (change)="dataField.changed = true" (blur)="updateDataForm(dataField)">
-
     </mat-form-field>
     <!-- </div> -->
     <!-- <div *ngIf="dataForm.constraints">
@@ -23,7 +20,7 @@
     <!-- </div> -->
     }
     @if(dataField.type == 'boolean') {
-    <mat-checkbox [disabled]="!dataFormConfig().editMode" [(ngModel)]="dataField.value"
+    <mat-checkbox [disabled]="!dataFormConfig().layer.dataFormConfig.editMode" [(ngModel)]="dataField.value"
         [matTooltip]="dataField.description!"
         (change)="dataField.changed = true; updateDataForm(dataField)">{{dataField.field}}</mat-checkbox>
     <br>
@@ -33,7 +30,7 @@
     <mat-form-field style="width:90%">
         <mat-label>{{dataField.field}}</mat-label>
 
-        <input type="text" matInput autocomplete='off' rows="3" [disabled]="!dataFormConfig().editMode"
+        <input type="text" matInput autocomplete='off' rows="3" [disabled]="!dataFormConfig().layer.dataFormConfig.editMode"
             [id]="dataField.field" ngModel placeholder="{{dataField.field}}" [(ngModel)]="dataField.value"
             (change)="changeTextField(dataField)" (blur)="updateDataForm(dataField)">
     </mat-form-field><br>
@@ -55,12 +52,11 @@
 
 
     @if(dataField.type == 'date' || dataField.type == 'timestamp with time zone') {
-        {{dataField.value}}
+        <!-- {{dataField.value}} -->
     <mat-form-field style="width:90%">
         <mat-label>{{dataField.field}}</mat-label>
-
-        <input matInput [disabled]="!dataFormConfig().editMode" [matDatepicker]="picker"
-            [matTooltip]="dataField.description!" placeholder="{{dataField.field}}" [value]="dataField.value"
+        <input matInput [disabled]="!dataFormConfig().layer.dataFormConfig.editMode" [matDatepicker]="picker"
+            [matTooltip]="dataField.description!" placeholder="{{dataField.field}}" [(ngModel)]="dataField.value"
             (dateChange)="dataField.changed = true; updateDataForm(dataField)">
         <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
         <mat-datepicker #picker></mat-datepicker>
@@ -68,4 +64,4 @@
     }
 
     }
-    }
+   

@@ -1,0 +1,23 @@
+.container {
+    background-color: rgb(59, 59, 59);
+    width: 100%;
+    color: white;
+    top: 0px;
+    height: 43px;
+}
+
+.txt {
+    color: white;
+}
+
+.align-right {
+    text-indent: 10px;
+}
+
+.vertical-center {
+    margin-left: 10px;
+    position: relative;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}

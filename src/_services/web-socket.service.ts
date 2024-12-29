@@ -1,5 +1,16 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, effect } from '@angular/core';
 import { Socket } from 'ngx-socket-io';
+import { BehaviorSubject } from 'rxjs';
+import { CQLModel } from '../app/feature-modules/feature-modules/crash/crash-analysis/config-model';
+import { environment } from '../environments/environment';
+
+export class message {
+   clientFrom!: string
+   clientTo!: string
+   message!: string
+   data!: string | number
+}
+
 @Injectable({
    providedIn: 'root',
 })
@@ -9,9 +20,10 @@ export class WebSocketService {
 
    constructor() {
       this.webSocket = new Socket({
-         url: "http://localhost:5000",
+         url: environment.apiUrl,
          options: {},
       });
+      
    }
 
    // this method is used to start connection/handhshake of socket with server
@@ -21,12 +33,10 @@ export class WebSocketService {
 
    // this method is used to get response from server
    receiveStatus() {
-      console.log('Receive Status')
       return this.webSocket.fromEvent('/get-response');
    }
 
    receiveHello() {
-      // console.log('something')
       return this.webSocket.fromEvent('hello');
    }
    // this method is used to end web socket connection
@@ -38,27 +48,19 @@ export class WebSocketService {
       this.webSocket.emit('message', message);
    }
 
-
-
-   initializeSocketConnection() {
+   initializeSocketConnection(client: string) { 
       let currentUser = JSON.parse(localStorage.getItem('currentUser')!)
-      console.log(currentUser)
-      let packet = { 'token': currentUser.token, 'client': 'Map' }
+      let packet = { 'token': currentUser.token, 'client': client }
       this.connectSocket(packet)
    }
 
    receiveSocketResponse() {
       this.receiveStatus().subscribe((receivedMessage: any) => {
-         console.log(receivedMessage);
          if (receivedMessage.message) {
             this.wsMessage.set(receivedMessage.message) 
-            // this.cql_filter = receivedMessage.message;
-            // this.updateMap()
          }
-         // console.log(this.cql_filter)
-         // this.websocketService.receiveHello().subscribe((receivedMessage:any) => {
-         //   console.log(receivedMessage)
-         // })
       });
    }
+  
 }
+ 

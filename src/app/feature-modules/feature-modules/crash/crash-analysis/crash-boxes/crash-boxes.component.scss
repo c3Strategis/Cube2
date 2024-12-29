@@ -1,0 +1,46 @@
+.container {
+    background-color: rgb(59, 59, 59);
+    width: 100%;
+  }
+
+  .txt {
+    color: white;
+  }
+
+.align-right {
+  text-indent: 10px;
+}
+
+// th.mat-header-cell, td.mat-cell {
+//   text-align: center;
+//   border: 1px solid #CCC;
+//   padding: 0 !important;
+// }
+
+.mat-button-toggle {
+  font-size: 14px;
+  vertical-align:bottom;
+  margin: 0px;
+  padding: 0px;
+  border: 0px;
+  height: 30px;
+  color: white;
+}
+
+.mat-button-toggle-group {
+  vertical-align:bottom;
+  font-size: 14px;
+  margin: 0px;
+  padding: 0px;
+  color: white;
+}
+
+.on {
+  cursor: pointer;
+  color: green
+}
+
+.off {
+  cursor: pointer;
+  color: white
+}

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { CrashMapService } from './crash-map.service';
+import { CrashMapService } from './xcrash-map.service';
 
 describe('CrashMapService', () => {
   let service: CrashMapService;

@@ -1,4 +1,45 @@
 /* You can add global styles to this file, and also import other style files */
 
+// @import '@angular/material/theming';
+// @include mat-core();
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+:host app {
+    height:100vh;
+    width:100vw;
+    max-height:100vh;
+    max-width:100vw;
+}
+
+// .mat-tooltip {
+//     font-size: 1em !important;
+// }
+
+// h3, h4 {
+//     font-family:"Roboto", sans-serif;
+// }
+
+// .mat-accordion, .mat-expansion-panel {
+//     margin-bottom:0;
+//     overflow:hidden;
+//     background-color: green;
+
+//     width:220px ;
+// }
+
+// .mat-expansion-panel-header, .mat-expansion-panel-body, .mat-expansion-panel-body-footer {
+//     background: red;
+//   }
+.mat-expansion-container-backgroud {
+    color: red
+}
+// .mat-expansion-panel-body {
+//          background-color: red;
+// }
+// .mat-expansion-panel-header {
+//     color: red
+//   }
+// .mat-input-element:disabled {
+//     color:black;
+// }

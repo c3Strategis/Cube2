@@ -1,36 +1,51 @@
 <div class="container" style="height:100%">
-
-  <mat-button-toggle-group #group="matButtonToggleGroup" name="fontStyle" aria-label="Font Style">
+  <mat-button-toggle-group #group="matButtonToggleGroup" appearance="legacy" name="fontStyle" aria-label="Font Style">
     <mat-button-toggle value="location">Location, Time, Agency</mat-button-toggle>
     <mat-button-toggle value="vehicles">Vehicles, Injuries, Fatalities</mat-button-toggle>
     <mat-button-toggle value="characteristics">Roadway Characteristics</mat-button-toggle>
     <mat-button-toggle value="environment">Environment</mat-button-toggle>
     <mat-button-toggle value="details">Crash Details</mat-button-toggle>
     <mat-button-toggle value="conditions">Roadway Conditions</mat-button-toggle>
-    <mat-button-toggle value="records">Record Keeping</mat-button-toggle>
-    <mat-button-toggle value="boxes">Crash Boxes</mat-button-toggle>
+    <mat-button-toggle value="crashboxes">Crash Boxes</mat-button-toggle>
   </mat-button-toggle-group>
+  <mat-button-toggle-group #view="matButtonToggleGroup" value="chart" appearance="legacy" name="fontStyle"
+    aria-label="Font Style" (change)="toggleView($event); group.value='none'">
+    <mat-button-toggle value="chart">Chart</mat-button-toggle>
+    <mat-button-toggle value="crashboxtable" (click)="loadCrashBoxes()">Crash Box Table</mat-button-toggle>
+    <mat-button-toggle value="crashreport">Crash Reports</mat-button-toggle>
+  </mat-button-toggle-group>
+  <!-- <span (click)="toggleView('Chart')">Chart</span> <span (click)="toggleView('CrashBoxes')">Crash Boxes</span> <span
+    (click)="toggleView('CrashReport')">Crash Reports</span> -->
+  <button mat-button (click)="clearFilter()" [matTooltip]="filter.CQL">Clear Filter</button>
 
   <div style="width:75%">
+
     @if(group.value=='location') {
     <div>
       <mat-form-field>
         <mat-label>Start Date</mat-label>
-        <input matInput [matDatepicker]="startdate" [value]="filter.startdate" (dateChange)="changeStartDate($event)">
+        <input matInput [matDatepicker]="startdate" [value]="" [formControl]="startDate"
+          (dateChange)="changeStartDate($event)">
         <mat-hint>MM/DD/YYYY</mat-hint>
-        <mat-datepicker-toggle matIconSuffix [for]="startdate"></mat-datepicker-toggle>
+        <mat-datepicker-toggle matIconSuffix [for]="startdate" startView="year"></mat-datepicker-toggle>
         <mat-datepicker #startdate></mat-datepicker>
       </mat-form-field>
       <mat-form-field>
         <mat-label>End Date</mat-label>
-        <input matInput [matDatepicker]="enddate" [value]="filter.enddate" (dateChange)="changeEndDate($event)">
+        <input matInput startView="year" [matDatepicker]="enddate" [value]="" [formControl]="endDate"
+          (dateChange)="changeEndDate($event)">
         <mat-hint>MM/DD/YYYY</mat-hint>
-        <mat-datepicker-toggle matIconSuffix [for]="enddate"></mat-datepicker-toggle>
+        <mat-datepicker-toggle matIconSuffix [for]="enddate" startView="year"></mat-datepicker-toggle>
         <mat-datepicker #enddate></mat-datepicker>
-      </mat-form-field><br>
+      </mat-form-field>
+      <mat-slide-toggle color="primary" (change)="setYTD()" [(ngModel)] = "filter.YTD"></mat-slide-toggle><span class="txt" >Year to {{filter.lastDate | date:'MMMM d'}}</span>
+      <button mat-button (click)="setDate('last5')">Five Full Years</button>
+      <button mat-button (click)="setDate('last5+')">Five Full Years to Current</button>
+      <button mat-button (click)="setDate('lastyear')">Last Year</button>
+      <button mat-button (click)="setDate('thisyear')">This Year</button><br>
       <mat-form-field style="width:25%">
         <mat-label>Jurisdictions</mat-label>
-        <mat-select [(ngModel)]="filter.jurisdition" (ngModelChange)="update()" multiple>
+        <mat-select [(ngModel)]="filter.jurisdition" (ngModelChange)="updateJurisdiction()" multiple>
           @for (city of listData.citiesList; track city) {
           <mat-option [value]="city">{{city}}</mat-option>
           }
@@ -96,6 +111,28 @@
         <mat-label>Fatalities</mat-label>
         <input matInput [(ngModel)]="filter.fatalities" (change)="update()">
       </mat-form-field><br>
+      <mat-form-field style="width:150px">
+        <mat-label>Operator</mat-label>
+        <mat-select [(ngModel)]="filter.driver1_age_operator" (selectionChange)="update()">
+          <mat-option value="gt">Greater Than</mat-option>
+          <mat-option value="eq">Equal</mat-option>
+          <mat-option value="lt">Less Than</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field style="width:150px">
+        <mat-label>Driver1 Age</mat-label>
+        <input matInput [(ngModel)]="filter.driver1_age" (change)="update()">
+      </mat-form-field>
+      <mat-form-field style="width:300px">
+        <mat-label>Crash Severity</mat-label>
+        <mat-select [(ngModel)]="filter.kabc" (ngModelChange)="update()" multiple>
+          <mat-option value="K">K</mat-option>
+          <mat-option value="A">A</mat-option>
+          <mat-option value="B">B</mat-option>
+          <mat-option value="C">C</mat-option>
+          <mat-option value="O">O</mat-option>
+        </mat-select>
+      </mat-form-field><br>
       Leave blank to disregard
     </div>
     }
@@ -129,24 +166,24 @@
 
     }
     @if(group.value=='environment') {
-      <div class="txt">
-        <mat-form-field style="width:25%">
-          <mat-label>Light Condition</mat-label>
-          <mat-select [(ngModel)]="filter.light_condition" (ngModelChange)="update()" multiple>
-            @for (lighting of listData.lightConditionList; track lighting) {
-            <mat-option [value]="lighting">{{lighting}}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field style="width:25%">
-          <mat-label>Weather Condition</mat-label>
-          <mat-select [(ngModel)]="filter.weather_conditions" (ngModelChange)="update()" multiple>
-            @for (weather of listData.weatherConditionsList; track weather) {
-            <mat-option [value]="weather">{{weather}}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      </div>
+    <div class="txt">
+      <mat-form-field style="width:25%">
+        <mat-label>Light Condition</mat-label>
+        <mat-select [(ngModel)]="filter.light_condition" (ngModelChange)="update()" multiple>
+          @for (lighting of listData.lightConditionList; track lighting) {
+          <mat-option [value]="lighting">{{lighting}}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field style="width:25%">
+        <mat-label>Weather Condition</mat-label>
+        <mat-select [(ngModel)]="filter.weather_conditions" (ngModelChange)="update()" multiple>
+          @for (weather of listData.weatherConditionsList; track weather) {
+          <mat-option [value]="weather">{{weather}}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
     }
     @if(group.value=='details') {
     <div class="txt">
@@ -162,7 +199,8 @@
           </td>
           <td>
             Aggressive Driving<br>
-            <mat-button-toggle-group [(ngModel)]="filter.aggressive_driving" aria-label="Font Style" (ngModelChange)="update()">
+            <mat-button-toggle-group [(ngModel)]="filter.aggressive_driving" aria-label="Font Style"
+              (ngModelChange)="update()">
               <mat-button-toggle value="X">All</mat-button-toggle>
               <mat-button-toggle value="Y">Yes</mat-button-toggle>
               <mat-button-toggle value="N">No</mat-button-toggle>
@@ -171,7 +209,8 @@
           </td>
           <td>
             Hit and Run<br>
-            <mat-button-toggle-group [(ngModel)]="filter.hit_and_run" aria-label="Font Style" (ngModelChange)="update()">
+            <mat-button-toggle-group [(ngModel)]="filter.hit_and_run" aria-label="Font Style"
+              (ngModelChange)="update()">
               <mat-button-toggle value="X">All</mat-button-toggle>
               <mat-button-toggle value="Y">Yes</mat-button-toggle>
               <mat-button-toggle value="N">No</mat-button-toggle>
@@ -180,7 +219,8 @@
           </td>
           <td>
             School Zone<br>
-            <mat-button-toggle-group [(ngModel)]="filter.school_zone" aria-label="Font Style" (ngModelChange)="update()">
+            <mat-button-toggle-group [(ngModel)]="filter.school_zone" aria-label="Font Style"
+              (ngModelChange)="update()">
               <mat-button-toggle value="X">All</mat-button-toggle>
               <mat-button-toggle value="Y">Yes</mat-button-toggle>
               <mat-button-toggle value="N">No</mat-button-toggle>
@@ -189,7 +229,8 @@
           </td>
           <td>
             Vulnerable Road Users<br>
-            <mat-button-toggle-group [(ngModel)]="filter.vulnerable_road_user" aria-label="Font Style" (ngModelChange)="update()">
+            <mat-button-toggle-group [(ngModel)]="filter.vulnerable_road_user" aria-label="Font Style"
+              (ngModelChange)="update()">
               <mat-button-toggle value="X">All</mat-button-toggle>
               <mat-button-toggle value="Y">Yes</mat-button-toggle>
               <mat-button-toggle value="N">No</mat-button-toggle>
@@ -222,68 +263,132 @@
     }
     @if(group.value=='conditions') {
     <div class="txt">
-      <table><tr>
-        <td>
-          Rumble Strips<br>
-          <mat-button-toggle-group [(ngModel)]="filter.school_zone" aria-label="Font Style" (ngModelChange)="update()">
-            <mat-button-toggle value="X">All</mat-button-toggle>
-            <mat-button-toggle value="Y">Yes</mat-button-toggle>
-            <mat-button-toggle value="N">No</mat-button-toggle>
-            <mat-button-toggle value="">Unknown</mat-button-toggle>
-          </mat-button-toggle-group>
-        </td>
-        <td>
-          Construction Zone<br>
-          <mat-button-toggle-group [(ngModel)]="filter.construction_zone" aria-label="Font Style" (ngModelChange)="update()">
-            <mat-button-toggle value="X">All</mat-button-toggle>
-            <mat-button-toggle value="Y">Yes</mat-button-toggle>
-            <mat-button-toggle value="N">No</mat-button-toggle>
-            <mat-button-toggle value="">Unknown</mat-button-toggle>
-          </mat-button-toggle-group>
-        </td>
+      <table>
+        <tr>
+          <td>
+            Rumble Strips<br>
+            <mat-button-toggle-group [(ngModel)]="filter.school_zone" aria-label="Font Style"
+              (ngModelChange)="update()">
+              <mat-button-toggle value="X">All</mat-button-toggle>
+              <mat-button-toggle value="Y">Yes</mat-button-toggle>
+              <mat-button-toggle value="N">No</mat-button-toggle>
+              <mat-button-toggle value="">Unknown</mat-button-toggle>
+            </mat-button-toggle-group>
+          </td>
+          <td>
+            Construction Zone<br>
+            <mat-button-toggle-group [(ngModel)]="filter.construction_zone" aria-label="Font Style"
+              (ngModelChange)="update()">
+              <mat-button-toggle value="X">All</mat-button-toggle>
+              <mat-button-toggle value="Y">Yes</mat-button-toggle>
+              <mat-button-toggle value="N">No</mat-button-toggle>
+              <mat-button-toggle value="">Unknown</mat-button-toggle>
+            </mat-button-toggle-group>
+          </td>
         </tr>
         <tr>
-       <td>
-        <mat-form-field style="width:200px">
-          <mat-label>Surface Condition</mat-label>
-          <mat-select [(ngModel)]="filter.surface_condition" (ngModelChange)="update()" multiple>
-            @for (surfaceCondition of this.listData.surfaceConditionList; track surfaceCondition) {
-            <mat-option [value]="surfaceCondition">{{surfaceCondition}}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        </td>
-        <td>
-          <mat-form-field style="width:200px">
-            <mat-label>Construction Type</mat-label>
-            <mat-select [(ngModel)]="filter.construction_type" (ngModelChange)="update()" multiple>
-              @for (constructionType of this.listData.constructionTypeList; track constructionType) {
-              <mat-option [value]="constructionType">{{constructionType}}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-          </td>         
-      </tr>
-    </table>
+          <td>
+            <mat-form-field style="width:200px">
+              <mat-label>Surface Condition</mat-label>
+              <mat-select [(ngModel)]="filter.surface_condition" (ngModelChange)="update()" multiple>
+                @for (surfaceCondition of this.listData.surfaceConditionList; track surfaceCondition) {
+                <mat-option [value]="surfaceCondition">{{surfaceCondition}}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </td>
+          <td>
+            <mat-form-field style="width:200px">
+              <mat-label>Construction Type</mat-label>
+              <mat-select [(ngModel)]="filter.construction_type" (ngModelChange)="update()" multiple>
+                @for (constructionType of this.listData.constructionTypeList; track constructionType) {
+                <mat-option [value]="constructionType">{{constructionType}}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </td>
+        </tr>
+      </table>
     </div>
     }
-    @if(group.value=='records') {
-    <div>
-      Records
+    @if(group.value=='crashboxes') {
+    @if(view.value == 'crashboxtable') {
+    <div class="txt">
+      <mat-form-field style="width:300px">
+        <mat-label>Classification</mat-label>
+        <mat-select [(ngModel)]="filter.cbClassification" (ngModelChange)="cbUpdate()" multiple>
+          @for (cbClassifications of this.listData.cbClassifications; track cbClassifications) {
+          <mat-option [value]="cbClassifications">{{cbClassifications}}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field style="width:300px">
+        <mat-label>Subclassification</mat-label>
+        <mat-select [(ngModel)]="filter.cbSubclassification" (ngModelChange)="cbUpdate()" multiple>
+          @for (cbSubclassifications of this.listData.cbSubclassifications; track cbSubclassifications) {
+          <mat-option [value]="cbSubclassifications">{{cbSubclassifications}}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field style="width:300px">
+        <mat-label>Owner</mat-label>
+        <mat-select [(ngModel)]="filter.cbOwner" (ngModelChange)="cbUpdate()" multiple>
+          @for (cbOwner of this.listData.cbOwners; track cbOwner) {
+          <mat-option [value]="cbOwner">{{cbOwner}}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
     </div>
     }
-    @if(group.value != 'boxes') {
-      <div class="container" style="position:absolute; bottom:0px; width:75%;"><app-line-chart #child
-        [datas]='this.filteredCollisions' [filter]="filter" [l]="listData" [i]="drivers"></app-line-chart></div>
+    @if(listData.TrafficChanges.length > 0) {
+    <mat-form-field style="width:300px">
+      <mat-label>Traffic Changes</mat-label>
+      <mat-select [(ngModel)]="trafficChange">
+        @for (tc of this.listData.TrafficChanges; track tc.id) {
+        <mat-option [value]="tc">{{tc.description}}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <button mat-button (click)="clearChange()">Clear Change</button>
+    <div class="txt">
+      @if(trafficChange) {
+      Start Date-{{trafficChange.start_date}}<br>
+      End Date-{{trafficChange.end_date}}<br>
+      }
+    </div>
     }
-    @if(group.value == 'boxes') {
-      <div class="container" style="position:absolute; bottom:0px; width:75%;"><app-crash-boxes #child
-        [fc]='this.filteredCollisions' [c]='this.jurisdictionCollisions' [l]="listData" [cbc]="cbc"></app-crash-boxes></div>
     }
+    @if(loaded) {
+    @if(view.value == 'chart') {
+    <div class="container" style="position:absolute; bottom:0px; width:75%;"><app-line-chart #child
+        [filteredCollisions]='this.filteredCollisions' [filter]="filter" [l]="listData" [i]="drivers"
+        [startDate]="startDate.value!" [endDate]="endDate.value!" [tc]="trafficChange!"></app-line-chart>
+    </div>
+    <div class="txt" style="position: absolute; height: 90%; bottom:0px; right:0px; width:25%; overflow-y:auto">
+      <app-statistics [fc]='this.filteredCollisions' [c]='this.jurisdictionCollisions' [l]="listData"
+        [filter]="filter"></app-statistics>
+    </div>
+    }
+    @if(view.value == 'crashboxtable' && filteredCollisionsWithBoxID.length > 0) {
+    <div class="txt" style="position:absolute; bottom:0px; width:100%;">
+      <app-crash-boxes #child [fc]='this.filteredCollisions' [c]='this.jurisdictionCollisions' [l]="listData"
+        [CMWB]="filteredCollisionsWithBoxID" [cbm]="filteredCrashBoxes"></app-crash-boxes>
+    </div>
+    }
+    @if(view.value == 'crashboxtable' && filteredCollisionsWithBoxID.length == 0) {
+      <div class="txt" style="position:absolute; bottom:100px; width:100%;">
+      Loading...
+      </div>
+    }
+    @if(view.value == 'crashreport') {
+    <div class="container" style="position:absolute; bottom:0px; width:100%;">
+      <app-crash-report #child [fc]="this.filteredCollisions"></app-crash-report>
+    </div>
+    }
+    }
+
   </div>
-  <div class="txt" style="position: absolute; height: 100%; top:0px; right:0px; width:25%; overflow-y:auto">
-    <app-statistics [fc]='this.filteredCollisions' [c]='this.jurisdictionCollisions' [l]="listData" [filter]="filter"></app-statistics>
-  </div>
+
   <!-- <div><button mat-button (click)="loadData()">Load Data</button></div> -->
   <!-- <div><button mat-button (click)="child.renderChart()">Load Data</button></div> -->
 

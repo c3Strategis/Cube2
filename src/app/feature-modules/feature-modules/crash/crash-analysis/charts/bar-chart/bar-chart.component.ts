@@ -14,7 +14,6 @@ export class BarChartComponent implements OnInit{
 
   ngOnInit(): void {
     this.createChart();
-    console.log("Creating Chart")
   }
 
   createChart(){

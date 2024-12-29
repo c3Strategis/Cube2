@@ -1,9 +1,5 @@
-// import { LayerClass, LayerPermission, UserPageLayer, MyCubeField, MyCubeComment, MyCubeConfig } from '../../../_models/layer.model';
-// import { Server } from '../../../_models/server.model';
-// import { User, UserPage } from '../../../_models/user.model';
 import { User } from '../../../_models/user.model';
 import Feature from 'ol/Feature';
-// import { UserPageInstance, ModulePermission } from '_models/module.model';
 import View from 'ol/View'
 import {Fill, Stroke, Circle, Style} from 'ol/style';
 import Text from 'ol/style/Text';
@@ -16,15 +12,8 @@ import { DataFormConfig, LogFormConfig } from './data-form.model';
 import { OverlayKeyboardDispatcher } from '@angular/cdk/overlay';
 import Map from 'ol/Map';
 import { UserPageLayer } from './layer.model';
-
-
-// export interface MapConfigView {
-//     projection: string;
-//     center: [number, number];
-//     zoom: number;
-//     resolutions?: number[];
-//     zoomDuration?: number;
-// }
+import { Modify } from 'ol/interaction';
+import { Geometry } from 'ol/geom';
 
 export class MapConfig {
     name?: string;
@@ -33,11 +22,11 @@ export class MapConfig {
     view?: View;
     // geolocation: ol.Geolocation;
     tracking: boolean = false;
-    baseLayers = []  //There is only one base layer, but ol requires it to be an array
+    baseLayers:VectorSource[] | never[]= []  //There is only one base layer, but ol requires it to be an array
     clickKey: any; //current click event
     pointermoveKey: any;
     // toolbar: string;
-    selectedFeature?: Feature;
+    selectedFeature?: Feature<Geometry> = undefined;
     selectedFeatures? = new Collection<Feature>()
     // userpages? = new Array<UserPage>();
     // defaultpage?: UserPage;  //This is only necessary when the user changes the default page.  It references this to uncheck it.
@@ -49,7 +38,7 @@ export class MapConfig {
     currentLayer? = new UserPageLayer;
     // disableCurrentLayer: boolean
     // featureList? =  new Array<featureList>();
-    editmode?: boolean;
+    editmode?: string = "None"
     showDeleteButton!: boolean;
     showFilterButton!: boolean;
     showStyleButton!: boolean;
@@ -62,23 +51,25 @@ export class MapConfig {
     styleShow?: boolean;
     measureShow?: boolean;
     featureDataShow!: boolean;
-    modulesShow?: boolean;
-    dataFormConfig = new DataFormConfig;
+    moduleShow?: boolean;
     // myCubeData: MyCubeField[]
     // myCubeComment = new LogFormConfig;
     // WMSFeatureData: string;
     // searchResult: Feature;
     // searchResultSource: VectorSource
     // searchResultLayer: VectorLayer
-    CrashBoxLayer? = new VectorLayer()
-    CrashBoxLayerShow: boolean = false
+    // CrashBoxLayer? = new VectorLayer()
+    // CrashBoxLayerShow: boolean = false
+    modify!: Modify
 }
 
-// export class featureList {
-//     id?: number;
-//     label: string
-//     feature: Feature
-// }
+export enum EditMode {
+    None = "NONE",
+    All = "ALL",
+    Point = "POINT",
+    Polyline = "POLYLINE",
+    Polygon = "POLYGON"
+}
 
 @Injectable()
 export class mapStyles {

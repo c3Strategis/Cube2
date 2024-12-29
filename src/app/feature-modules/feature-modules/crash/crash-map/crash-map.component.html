@@ -1,0 +1,94 @@
+<!-- Turn this off in the css settings -->
+<div class="pull-right" style="background: rgb(255, 255, 255); left:0px; position:absolute">
+    <div style="width:500px">
+        <mat-accordion class="example-headers-align">
+            <mat-expansion-panel id="layerExpansion">
+                <mat-expansion-panel-header>
+                    <mat-panel-title>
+                        <strong>Crashes</strong>
+                    </mat-panel-title>
+                    <mat-panel-description>
+                    </mat-panel-description>
+                </mat-expansion-panel-header>
+                <mat-accordion class="example-headers-align">
+                    <mat-expansion-panel id="layerExpansion">
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>
+                                <strong>Import</strong>
+                            </mat-panel-title>
+                            <mat-panel-description>
+                            </mat-panel-description>
+                        </mat-expansion-panel-header>
+                        @if (unitFile && collisionFile && individualFile) {
+                        <button mat-button (click)="crashImport()">Process Upload</button><br>
+                        }
+                        @else {
+                        Drag and drop the Collision, Individual, and Unit files. The files must start with "Collision",
+                        "Individual", and "Unit" respectively.<br>
+                        <div class="col-12 rmpm dropzone" appDragDrop (files)="filesDropped($event)">
+                            <div class="text-wrapper">
+                                <div class="centered">Drop your file here!</div>
+                            </div>
+                        </div>
+                        }
+                        @if (collisionFile) {
+                        Collision file loaded<br>
+                        }
+                        @if (individualFile) {
+                        Individual file loaded<br>
+                        }
+                        @if (unitFile) {
+                        Unit file loaded<br>
+                        }
+                        <!-- droped image preview
+                <div *ngFor="let file of files">
+                  <img *ngIf="file" [src]="file.url" width="100px" height="100px">
+                </div> -->
+                    </mat-expansion-panel>
+                    <mat-expansion-panel id="layerExpansion">
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>
+                                <strong>Clean</strong>
+                            </mat-panel-title>
+                            <mat-panel-description>
+                            </mat-panel-description>
+                        </mat-expansion-panel-header>
+                        <mat-slide-toggle color="primary" (change)="toggleCleanCrashes()"
+                            [(ngModel)]="cleanMode">Crashes to Clean</mat-slide-toggle><br>
+                            @if(cleanFeatures) { {{cleanFeatures.length}} Crashes to Review<br>}
+                        @if(cleanFeatures) {
+                        <b>Date: </b>{{cleanFeature.collision_date}}<br>
+                        <b>Road: </b>{{cleanFeature.house_number}} {{cleanFeature.direction}}
+                        {{cleanFeature.roadway_name}}<br>
+                        <b>Intersecting Road: </b>{{cleanFeature.intersecting_road_number}}
+                        {{cleanFeature.intersecting_road}}<br>}
+                        <div style="max-height: 300px; scrollbar-width:none; overflow-y:auto">
+                            {{cleanFeature.narrative}}
+                        </div>
+                        @if(this.mapConfig.selectedFeature) {
+                            <br><button mat-button (click)="updateCleanCrash()">Location Good</button>   
+                            @if(locationDirty) {<br><button mat-button (click)="updateCrashLocation()">Update
+                                Location</button><br>}
+                            }
+                    </mat-expansion-panel>
+                    <mat-expansion-panel id="layerExpansion">
+                        <mat-expansion-panel-header>
+                            <mat-panel-title>
+                                <strong>Style</strong>
+                            </mat-panel-title>
+                            <mat-panel-description>
+                            </mat-panel-description>
+                        </mat-expansion-panel-header>
+                        <mat-form-field>
+                            <mat-label>Heatmap</mat-label>
+                            <mat-select [(ngModel)]="selectedHeatmapStyle" (selectionChange)="updateHeatmapStyle($event)">
+                                @for (item of heatmapStyles; track item) {
+                                    <mat-option [value]="item">{{item.viewValue}}</mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </mat-expansion-panel>
+                </mat-accordion>
+            </mat-expansion-panel>
+        </mat-accordion>
+    </div>

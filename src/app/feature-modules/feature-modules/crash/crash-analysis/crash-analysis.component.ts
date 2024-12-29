@@ -1,5 +1,4 @@
-import { Component, OnInit, Signal, ViewChild, numberAttribute, signal } from '@angular/core';
-import { WebSocketService } from '../../../../../_services/web-socket.service';
+import { ChangeDetectorRef, Component, OnInit, ViewChild, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select'
@@ -9,7 +8,6 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card'
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { Router } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav'
 import { MatDatepickerModule } from '@angular/material/datepicker'
 import { provideNativeDateAdapter } from '@angular/material/core';
@@ -17,502 +15,401 @@ import { BarChartComponent } from './charts/bar-chart/bar-chart.component';
 import { LineChartComponent } from './charts/line-chart/line-chart.component';
 import { CrashService } from './crash.service';
 import { CrashHTTPService } from './crash_http.service';
-import { CollisionModel, CBC } from './collision-model';
+import { CollisionModel, CollisionModelWithBoxes, CrashBoxModelWithStats, TrafficChange } from './collision-model';
 import { IndividualModel } from './individual-model';
-import { CrashBox, FilterModel, ListData } from './config-model';
+import { CrashBox, FilterModel, ListData, ModuleData } from './config-model';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { StatisticsComponent } from './statistics/statistics.component';
 import { CrashBoxesComponent } from './crash-boxes/crash-boxes.component';
-import { controllers } from 'chart.js';
-
+import { SQLService } from '../../../../map/map/services/sql.service';
+import { GeohttpService } from '../../../../map/map/services/geohttp.service';
+import { CrashReportComponent } from './crash-report/crash-report.component';
+import { BroadcastService } from '../../../../../_services/broadcast.service';
+import { IBroadcastMessage } from '../../../../../_services/broadcast.service';
+import { Subscription, filter, lastValueFrom } from 'rxjs';
+import { Geometry, Polygon } from 'ol/geom';
+import { Feature, } from 'ol';
+import { transform } from 'ol/proj';
+import { GeoJSON } from 'ol/format';
+import { DatePipe } from '@angular/common';
+import {TooltipPosition, MatTooltipModule} from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-crash-analysis',
   standalone: true,
   imports: [MatButtonModule, MatInputModule, RouterOutlet, MatSelectModule, MatSlideToggleModule, ReactiveFormsModule, MatDatepickerModule, MatButtonToggleModule,
     MatCardModule, MatFormFieldModule, MatInputModule, FormsModule, MatButtonModule, MatSidenavModule, BarChartComponent, LineChartComponent, MatGridListModule, StatisticsComponent,
-    CrashBoxesComponent],
+    CrashBoxesComponent, CrashReportComponent, DatePipe, MatTooltipModule],
   providers: [provideNativeDateAdapter(), CrashService, CrashHTTPService],
   templateUrl: './crash-analysis.component.html',
   styleUrl: './crash-analysis.component.scss'
 })
 
-
 export class CrashAnalysisComponent implements OnInit {
-
-  constructor(private websocketService: WebSocketService, private crashService: CrashService, private crashHTTPService: CrashHTTPService) { }
-
-  @ViewChild(LineChartComponent) private myChild!: LineChartComponent
-  date = new FormControl(new Date());
+  module_instance = input.required<string>({ alias: 'mi' })
+  public receivedMessage!: string;
+  constructor(private crashService: CrashService, private crashHTTPService: CrashHTTPService, private sqlService: SQLService, public geoHTTPService: GeohttpService, public broadcastService: BroadcastService, private ref: ChangeDetectorRef) { }
+  @ViewChild(LineChartComponent) private chartComponent!: LineChartComponent
+  startDate = new FormControl(new Date());
+  endDate = new FormControl(new Date());
+  // public trafficChangeControl = new FormControl();  //This may be necessary to fix the traffic change control.  
   listData = new ListData
-  serializedDate = new FormControl(new Date().toISOString());
-  selectedAgency: string[] = []
-  deerControl = new FormControl('');
-  public message!: string
-  public show!: string
-  public filter: FilterModel = {
-    CQL: '',
-    jurisdition: [],
-    agency: [],
-    startdate: new Date('1/1/2019'),
-    enddate: new Date(),
-    deer: 'All',
-    roadway_class: [],
-    aggressive_driving: 'X',
-    hit_and_run: 'X',
-    school_zone: 'X',
-    primary_factor: [],
-    manner_of_collision: [],
-    rumble_strips: 'X',
-    construction_zone: 'X',
-    construction_type: [],
-    surface_condition: [],
-    light_condition: [],
-    weather_conditions: [],
-    roadway_junction_type: [],
-    road_character: [],
-    vulnerable_road_user: 'X',
-    crashBox: new CrashBox,
-    trailers_operator: 'gt',
-    vehicles_operator: 'gt',
-    injuries_operator: 'gt',
-    fatalities_operator: 'gt'
-  }
-
+  public moduleData = new ModuleData
+  public crashAnalysisView: string = 'chart'
+  public filter = new FilterModel
   public collisions: CollisionModel[] = []
   public filteredCollisions: CollisionModel[] = []
   public jurisdictionCollisions: CollisionModel[] = []
-  public crashBoxCollisions: CollisionModel[] = []
+  public crashBoxCollisions: CollisionModel[] = []  //just the collisions that occur within a specified crashbox
   public drivers: IndividualModel[] = []
   public VRUs: IndividualModel[] = []
-  public cbc: CBC[] = []
+  public crashBoxes: CrashBoxModelWithStats[] = []
+  public filteredCrashBoxes: CrashBoxModelWithStats[] = []
+  public collisionsWithBoxID: CollisionModelWithBoxes[] = []
+  public filteredCollisionsWithBoxID: CollisionModelWithBoxes[] = []
+  public trafficChange!: TrafficChange | undefined
+  public loaded: boolean = false
+  public trafficChangeList: TrafficChange[] = []
+  public getLeftJoinWithinSubscription!: Subscription
 
   ngOnInit(): void {
-    this.initializeSocketConnection()
-    this.receiveSocketResponse()
+    this.determineModuleInstance()
+    let today = new Date()
+    this.startDate.setValue(new Date(today.getFullYear() - 5, 0, 1))  //default start date
+    this.endDate.setValue(new Date(today.getFullYear()-1, 11, 31))  //default end date
+    this.listData = new ListData
     this.loadData()
-    // this.loadCrashBoxes()
-  }
-
-  initializeSocketConnection() {
-    let currentUser = JSON.parse(localStorage.getItem('currentUser')!)
-    console.log(currentUser)
-    let packet = { 'token': currentUser.token, 'client': 'CrashAnalysis' }
-    this.websocketService.connectSocket(packet)
-  }
-
-  receiveSocketResponse() {
-    this.websocketService.receiveStatus().subscribe((receivedMessage: any) => {
-      this.filter.crashBox = new CrashBox
-      if (receivedMessage['message'] == 'CrashBox') {
-        let cb = new CrashBox
-        cb.table = 'network."CrashBoxCounty"'
-        cb.id = receivedMessage.data
-        this.filter.crashBox = cb
-        console.log(cb)
-        if (cb.id > 0) {
-          this.crashHTTPService.loadCollisionsFromBox(this.filter.crashBox).subscribe((data: any) => {
-            this.crashBoxCollisions = data['collision']
-            this.addVRU(this.crashBoxCollisions)
-            console.log(this.crashBoxCollisions)
-            this.update()
-          })
-
+    this.broadcastService.messageReceived$.subscribe((message: IBroadcastMessage) => {
+      if (message.target == "CrashAnalysis") {
+        switch (message.action) {
+          case "CrashBox":  //if a crashBox is selected
+          console.log(message.payload)
+            this.filter.crashBox = new CrashBox
+            this.filter.crashBox.id = message.payload['id']
+            console.log(message.payload['id'])
+            if (this.filter.crashBox.id > 0) {
+              this.sqlService.GetAll(this.moduleData.crashBoxSchema, this.moduleData.crashBoxTable, '', "id=" + this.filter.crashBox.id).subscribe((x) => {
+                let crashboxfield = this.moduleData.crashBoxName
+                this.filter.crashBox.name = x[0][0][crashboxfield]
+                const polygonGeometry4326 = new Polygon(x[0][0]['geom']['coordinates'])
+                this.filter.crashBox.geom = polygonGeometry4326
+                this.getFilteredCollisions()
+                this.getTrafficChangeList()
+              })
+              //I think this can be removed, but leaving it in for now.
+              // this.geoHTTPService.getWithin(this.moduleData.crashBoxSchema, this.moduleData.crashBoxTable, this.filter.crashBox.id.toString(), this.moduleData.crashSchema, this.moduleData.crashTable, 'id').subscribe((data: any) => {
+              //   if (this.crashBoxCollisions != data) {
+              //     this.crashBoxCollisions = data
+              //     this.addVRU(this.crashBoxCollisions)
+                 
+              //   }
+              // })
+            }
+            else {
+              // if (this.crashBoxCollisions.length > 0) {
+                this.crashBoxCollisions = []
+                this.crashBoxes = []
+                this.update()
+                this.ref.detectChanges()  //I don't know why this is necessary
+              // }
+              this.listData.TrafficChanges = []
+              this.trafficChange = undefined
+            }
+            break;
+          case "Crash":
+            console.log('Received Crash Message')
+            if (+message.payload > 0) {
+              this.filteredCollisions = this.collisions.filter((x) => {
+                return x.id == message.payload
+              })
+              this.filteredCollisionsWithBoxID = this.collisionsWithBoxID.filter((x) => {
+                return x.id == message.payload
+              })
+            }
+            else {
+              if (this.filteredCollisions != this.collisions) {
+                this.filteredCollisions = this.collisions
+                this.update()
+              }
+              if (this.filteredCollisionsWithBoxID != this.collisionsWithBoxID) {
+                this.filteredCollisionsWithBoxID = this.collisionsWithBoxID
+                this.cbUpdate()
+              }
+            }
+            this.ref.detectChanges()
+            break;
         }
-        else {
-          console.log(cb.id)
-          this.crashBoxCollisions = []
-          this.update()
-        }
+      } else {
       }
-    });
+    })
   }
 
-  // Disconnects socket connection
-  disconnectSocket() {
-    this.websocketService.disconnectSocket();
+  getTrafficChangeList(crashBoxID: number = this.filter.crashBox.id) {  //There are still gremlins in this.
+    console.log('getTrafficChangeList', crashBoxID)
+    if (crashBoxID) {
+      this.geoHTTPService.getIntersects(this.moduleData.crashBoxSchema, this.moduleData.crashBoxTable, crashBoxID.toString(), 'mycube', 'a4', 'id').subscribe((changes: any) => {
+        this.trafficChangeList = changes.slice(0)
+        this.listData.TrafficChanges = []
+        this.listData.TrafficChanges = this.trafficChangeList
+        this.listData.TrafficChanges = this.listData.TrafficChanges.filter((change) => {
+          if (new Date(change.start_date) >= this.startDate.value! && new Date(change.end_date) <= this.endDate.value!) {
+            return (true)
+          }
+          else {
+            return (false)
+          }
+        })
+        if (this.listData.TrafficChanges.length > 0 && this.trafficChange) {
+          if (this.listData.TrafficChanges.map((x) => x.id).includes(this.trafficChange.id)) {  //resets the traffic changes only if the current isn't in the new set.
+            //need to make it so it actually checks the box in the control
+            // this.trafficChangeControl.setValue(this.trafficChange)
+          }
+          else {
+            this.trafficChange = undefined
+          }
+        }
+        else {  //no list changes, clear it
+          this.trafficChange = undefined
+        }
+        this.ref.detectChanges();
+      })
+    }
   }
 
-  sendmessage(CQL: string) {
-    let currentUser = JSON.parse(localStorage.getItem('currentUser')!)
-    this.websocketService.sendMessage({ 'token': currentUser.token, 'client': 'CrashAnalysis', 'message': CQL })
+  clearChange() {
+    this.trafficChange = undefined
   }
 
-  public setShow(setshow: string) {
-    this.show = setshow
+  determineModuleInstance() {
+    //need to soft code a search to turn the module_instanceID into the crash inventory schema and layer
+    this.moduleData.crashSchema = 'mycube'
+    this.moduleData.crashTable = 'm1collisions'
+    this.moduleData.crashBoxSchema = 'mycube'
+    this.moduleData.crashBoxTable = 'a2'
+    this.moduleData.crashBoxName = 'StreetName'
+    this.moduleData.individualSchema = 'modules'
+    this.moduleData.individualTable = 'm1individual'
+  }
+
+  sendCQL() {
+    // console.log(this.crashService.generateCQL(this.filter, this.startDate.value!, this.endDate.value!))
+    this.broadcastService.send('CrashAnalysis', 'Map', 'CQL', this.crashService.generateCQL(this.filter, this.startDate.value!, this.endDate.value!))
+    this.filter.CQL = this.crashService.generateCQL(this.filter, this.startDate.value!, this.endDate.value!).collisions
   }
 
   public update() {
-    this.generateCQL()
-    this.generateFilter().then((x) => {
-      this.myChild.updateChart(this.filteredCollisions)
+    console.log('update')
+    this.sendCQL()
+    this.getFilteredCollisions()
+
+  }
+
+  public cbUpdate() {
+    console.log('cbUpdate')
+    this.filteredCrashBoxes = this.crashBoxes.filter((crashbox) => {
+      if (this.filter.cbClassification.length > 0) {
+        return (this.filter.cbClassification!.includes(crashbox.Classification))
+      }
+      else {
+        return (true)
+      }
+    })
+    this.filteredCrashBoxes = this.filteredCrashBoxes.filter((crashbox) => {
+      if (this.filter.cbSubclassification.length > 0) {
+        return (this.filter.cbSubclassification!.includes(crashbox.Subclassification))
+      }
+      else {
+        return (true)
+      }
+    })
+    this.filteredCrashBoxes = this.filteredCrashBoxes.filter((crashbox) => {
+      if (this.filter.cbOwner.length > 0) {
+        return (this.filter.cbOwner!.includes(crashbox.Owner))
+      }
+      else {
+        return (true)
+      }
     })
   }
 
-  public generateCQL() {
-    let CQL: string
-    CQL = ''
-    if (this.filter.jurisdition?.length! > 0) {
-      CQL = "city IN ('".concat(this.filter.jurisdition!.join("','")).concat("') AND ")
-    }
-    CQL = CQL!.concat(" colldte BETWEEN '")
-    CQL = CQL.concat(this.filter.startdate.getFullYear() + "-" + (this.filter.startdate.getMonth() + 1) + "-" + this.filter.startdate.getDate())
-    CQL = CQL.concat("' AND '")
-    CQL = CQL.concat(this.filter.enddate.getFullYear() + "-" + (this.filter.enddate.getMonth() + 1) + "-" + this.filter.enddate.getDate())
-    CQL = CQL.concat("'")
-    if (this.filter.agency?.length! > 0) {
-      CQL = CQL.concat(" AND agency IN ('").concat(this.filter.agency!.join("','")).concat("')")
-    }
-    if (this.filter.deer == 'Deer') { CQL = CQL.concat(" AND number_deer > 0") }
-    if (this.filter.deer == 'None') { CQL = CQL.concat(" AND number_deer = 0") }
-    if (this.filter.trailers) {
-      switch (this.filter.trailers_operator) {
-        case 'gt': {
-          CQL = CQL.concat(" AND trailers_involved >" + this.filter.trailers)
-          break
-        }
-        case 'eq': {
-          CQL = CQL.concat(" AND trailers_involved =" + this.filter.trailers)
-          break
-        }
-        case 'lt': {
-          CQL = CQL.concat(" AND trailers_involved <" + this.filter.trailers)
-        }
-      }
-    }
-    if (this.filter.vehicles) {
-      switch (this.filter.vehicles_operator) {
-        case 'gt': {
-          CQL = CQL.concat(" AND vehicles_involved >" + this.filter.vehicles)
-          break
-        }
-        case 'eq': {
-          CQL = CQL.concat(" AND vehicles_involved =" + this.filter.vehicles)
-          break
-        }
-        case 'lt': {
-          CQL = CQL.concat(" AND vehicles_involved <" + this.filter.vehicles)
-        }
-      }
-    }
-    if (this.filter.injuries) {
-      switch (this.filter.injuries_operator) {
-        case 'gt': {
-          CQL = CQL.concat(" AND number_injured >" + this.filter.injuries)
-          break
-        }
-        case 'eq': {
-          CQL = CQL.concat(" AND number_injured =" + this.filter.injuries)
-          break
-        }
-        case 'lt': {
-          CQL = CQL.concat(" AND number_injured <" + this.filter.injuries)
-        }
-      }
-    }
-    if (this.filter.fatalities) {
-      switch (this.filter.fatalities_operator) {
-        case 'gt': {
-          CQL = CQL.concat(" AND number_dead >" + this.filter.fatalities)
-          break
-        }
-        case 'eq': {
-          CQL = CQL.concat(" AND number_dead =" + this.filter.fatalities)
-          break
-        }
-        case 'lt': {
-          CQL = CQL.concat(" AND number_dead <" + this.filter.fatalities)
-        }
-      }
-    }
-    if (this.filter.roadway_class!.length > 0) {
-      CQL = CQL.concat(" AND roadway_class IN ('").concat(this.filter.roadway_class!.join("','")).concat("')")
-    }
-    if (this.filter.aggressive_driving != "X") {
-      CQL = CQL.concat(" AND aggressive_driving = '" + this.filter.aggressive_driving + "'")
-    }
-    if (this.filter.hit_and_run != "X") {
-      CQL = CQL.concat(" AND hit_and_run = '" + this.filter.hit_and_run + "'")
-    }
-    if (this.filter.school_zone != "X") {
-      CQL = CQL.concat(" AND school_zone = '" + this.filter.school_zone + "'")
-    }
-    if (this.filter.primary_factor?.length! > 0) {
-      CQL = CQL.concat(" AND primary_factor IN ('").concat(this.filter.primary_factor!.join("','")).concat("')")
-    }
-    if (this.filter.manner_of_collision?.length! > 0) {
-      CQL = CQL.concat(" AND manner_of_collision IN ('").concat(this.filter.manner_of_collision!.join("','")).concat("')")
-    }
-    if (this.filter.rumble_strips != "X") {
-      CQL = CQL.concat(" AND rumble_strips = '" + this.filter.rumble_strips + "'")
-    }
-    if (this.filter.construction_zone != "X") {
-      CQL = CQL.concat(" AND construction_zone = '" + this.filter.construction_zone + "'")
-    }
-    if (this.filter.construction_type?.length! > 0) {
-      CQL = CQL.concat(" AND construction_type IN ('").concat(this.filter.construction_type!.join("','")).concat("')")
-    }
-    if (this.filter.surface_condition?.length! > 0) {
-      CQL = CQL.concat(" AND surface_condition IN ('").concat(this.filter.surface_condition!.join("','")).concat("')")
-    }
-    if (this.filter.light_condition?.length! > 0) {
-      CQL = CQL.concat(" AND light_condition IN ('").concat(this.filter.light_condition!.join("','")).concat("')")
-    }
-    if (this.filter.roadway_junction_type?.length! > 0) {
-      CQL = CQL.concat(" AND roadway_junction_type IN ('").concat(this.filter.roadway_junction_type!.join("','")).concat("')")
-    }
-    if (this.filter.road_character?.length! > 0) {
-      CQL = CQL.concat(" AND road_character IN ('").concat(this.filter.road_character!.join("','")).concat("')")
-    }
-    if (this.filter.weather_conditions?.length! > 0) {
-      CQL = CQL.concat(" AND weather_conditions IN ('").concat(this.filter.weather_conditions!.join("','")).concat("')")
-    }
-    if (this.filter.vulnerable_road_user?.length! > 0) {
-      if (this.filter.vulnerable_road_user == 'Y') {CQL = CQL.concat(" AND vru = true")}
-      if (this.filter.vulnerable_road_user == 'N') {CQL = CQL.concat(" AND vru <> true")}
-    }
-    //   //rest of the filters
-    //   // console.log(CQL)
-
-    this.sendmessage(CQL)
+  public clearFilter() {
+    //consider not running getCollisions and just copying the start and end over and using this.collisions[]
+    let cb: CrashBox = this.filter.crashBox
+    this.filter = new FilterModel
+    // this.filter.crashBox = cb
+    this.trafficChange = undefined
+    // this.listData.TrafficChanges = []
+    this.getCollisions()
+    this.getJurisdictionCollisions()
+    this.cbUpdate()
+    this.sendCQL()
   }
 
-
-  async generateFilter() {
-    //filtering the juridiction collisions for the crash statistics
-    if (this.crashBoxCollisions.length == 0) {
-      this.filteredCollisions = this.collisions
-    }
-    else {
-      this.filteredCollisions = this.crashBoxCollisions
-    }
-    this.jurisdictionCollisions = this.collisions.filter((collision) => {
-      if (this.filter.jurisdition?.length == 0) {
-        return true
-      }
-      else {
-        return (this.filter.jurisdition!.includes(collision.city))
-      }
-    })
-    //filtering all the other collisions
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.jurisdition?.length == 0) { return true }
-      else {
-        return (this.filter.jurisdition!.includes(collision.city))
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.deer == 'All') { return true }
-      if (this.filter.deer == 'Deer') {
-        return collision.number_deer > 0
-      }
-      if (this.filter.deer == 'None') {
-        return collision.number_deer == 0
-      }
-      else {
-        return true
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.agency?.length == 0) { return true }
-      else {
-        return (this.filter.agency!.includes(collision.agency))
-      }
-    })
-    if (this.filter.trailers && this.filter.trailers_operator == 'gt') {
-      this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-        return (new Number(collision.trailers_involved) > new Number(this.filter.trailers))
-      })
-    }
-    if (this.filter.trailers && this.filter.trailers_operator == 'eq') {
-      this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-        return (collision.trailers_involved == this.filter.trailers)
-      })
-    }
-    if (this.filter.trailers && this.filter.trailers_operator == 'lt') {
-      this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-        return (new Number(collision.trailers_involved) < new Number(this.filter.trailers))
-      })
-    }
-    if (this.filter.vehicles && this.filter.vehicles_operator == 'gt') {
-      this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-        return (new Number(collision.vehicles_involved) > new Number(this.filter.vehicles))
-      })
-    }
-    if (this.filter.vehicles && this.filter.vehicles_operator == 'eq') {
-      this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-        return (collision.vehicles_involved == this.filter.vehicles)
-      })
-    }
-    if (this.filter.vehicles && this.filter.vehicles_operator == 'lt') {
-      this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-        return (new Number(collision.vehicles_involved) < new Number(this.filter.vehicles))
-      })
-    }
-    if (this.filter.injuries && this.filter.injuries_operator == 'gt') {
-      this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-        return (new Number(collision.number_injured) > new Number(this.filter.injuries))
-      })
-    }
-    if (this.filter.injuries && this.filter.injuries_operator == 'eq') {
-      this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-        return (collision.number_injured == this.filter.injuries)
-      })
-    }
-    if (this.filter.injuries && this.filter.injuries_operator == 'lt') {
-      this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-        return (new Number(collision.number_injured) < new Number(this.filter.injuries))
-      })
-    }
-    if (this.filter.fatalities && this.filter.fatalities_operator == 'gt') {
-      this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-        return (new Number(collision.number_dead) > new Number(this.filter.fatalities))
-      })
-    }
-    if (this.filter.fatalities && this.filter.fatalities_operator == 'eq') {
-      this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-        return (collision.number_dead == this.filter.fatalities)
-      })
-    }
-    if (this.filter.fatalities && this.filter.fatalities_operator == 'lt') {
-      this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-        return (new Number(collision.number_dead) < new Number(this.filter.fatalities))
-      })
-
-    }
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.roadway_class?.length == 0) { return true }
-      else {
-        return (this.filter.roadway_class!.includes(collision.roadway_class))
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.aggressive_driving == 'X') { return true }
-      else {
-        return (this.filter.aggressive_driving! == collision.aggressive_driving)
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.hit_and_run == 'X') { return true }
-      else {
-        return (this.filter.hit_and_run! == collision.hit_and_run)
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.school_zone == 'X') { return true }
-      else {
-        return (this.filter.school_zone! == collision.school_zone)
-      }
-    })
-   this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-    if (this.filter.vulnerable_road_user == 'N') {return (collision.VRU != true)}
-    if (this.filter.vulnerable_road_user == 'Y') {return (collision.VRU == true)}
-    else {return true}
-   })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.primary_factor?.length == 0) { return true }
-      else {
-        return (this.filter.primary_factor!.includes(collision.primary_factor))
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.manner_of_collision?.length == 0) { return true }
-      else {
-        return (this.filter.manner_of_collision!.includes(collision.manner_of_collision))
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.rumble_strips == 'X') { return true }
-      else {
-        return (this.filter.rumble_strips! == collision.rumble_strips)
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.construction_zone == 'X') { return true }
-      else {
-        return (this.filter.construction_zone! == collision.construction)
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.construction_type?.length == 0) { return true }
-      else {
-        return (this.filter.construction_type!.includes(collision.construction_type))
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.surface_condition?.length == 0) { return true }
-      else {
-        return (this.filter.surface_condition!.includes(collision.surface_condition))
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.light_condition?.length == 0) { return true }
-      else {
-        return (this.filter.light_condition!.includes(collision.light_condition))
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.roadway_junction_type?.length == 0) { return true }
-      else {
-        return (this.filter.roadway_junction_type!.includes(collision.roadway_junction_type))
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.road_character?.length == 0) { return true }
-      else {
-        return (this.filter.road_character!.includes(collision.road_character))
-      }
-    })
-    this.filteredCollisions = this.filteredCollisions.filter((collision) => {
-      if (this.filter.weather_conditions?.length == 0) { return true }
-      else {
-        return (this.filter.weather_conditions!.includes(collision.weather_conditions))
-      }
-    })
-    //include the rest of the filters
+  public toggleView($event: any) {
+    this.crashAnalysisView = $event.value
   }
 
   public changeStartDate(event: any) {
-    this.filter.startdate = event.value
-    this.update()
+    this.loadData()
+    // this.getTrafficChangeList()
   }
+
   public changeEndDate(event: any) {
-    this.filter.enddate = event.value
-    this.update()
+    this.loadData()
+    // this.getTrafficChangeList()
+  }
+
+  public setDate(view: string) {
+    let today: Date = new Date()
+    switch (view) {
+      case 'last5': {
+        let startdate = new Date(new Date().setFullYear(new Date().getFullYear() - 5))
+        startdate.setMonth(0)
+        startdate.setDate(1)
+        startdate.setHours(0,0,0,0)
+        let enddate = new Date(new Date().setFullYear(new Date().getFullYear() - 1))
+        enddate.setMonth(11)
+        enddate.setDate(31)
+        enddate.setHours(0,0,0,0)
+        this.startDate.setValue(startdate)
+        this.endDate.setValue(enddate)
+        break
+      }
+      case 'last5+': {
+        let startdate = new Date(new Date().setFullYear(new Date().getFullYear() - 5))
+        startdate.setMonth(0)
+        startdate.setDate(1)
+        startdate.setHours(0,0,0,0)
+        let enddate = new Date()
+        enddate.setHours(0,0,0,0)
+        this.startDate.setValue(startdate)
+        this.endDate.setValue(enddate)
+        break
+      }
+      case 'lastyear': {
+        let startdate = new Date(new Date().setFullYear(new Date().getFullYear() - 1))
+        startdate.setMonth(0)
+        startdate.setDate(1)
+        startdate.setHours(0,0,0,0)
+        let enddate = new Date(new Date().setFullYear(new Date().getFullYear() - 1))
+        enddate.setMonth(11)
+        enddate.setDate(31)
+        startdate.setHours(0,0,0,0)
+        this.startDate.setValue(startdate)
+        this.endDate.setValue(enddate)
+        break
+      }
+      case 'thisyear': {
+        let startdate = new Date(new Date().setFullYear(new Date().getFullYear()))
+        startdate.setMonth(0)
+        startdate.setDate(1)
+        startdate.setHours(0,0,0,0)
+        let enddate = new Date()
+        this.startDate.setValue(startdate)
+        this.endDate.setValue(enddate)
+        enddate.setHours(0,0,0,0)
+        break
+      }
+    }
+    this.loadData()
+  }
+  setYTD() {
+    this.getJurisdictionCollisions()
+    this.getFilteredCollisions()
   }
 
   public loadData() {
-    this.crashHTTPService.loadCollisions().subscribe((res: any) => {
-      this.collisions = res['collision']
-      this.filteredCollisions = res['collision']
-      this.listData = this.crashService.loadLists(this.collisions)
-      console.log(this.listData)
-      this.update()
-      this.addVRU(this.collisions)
-    })
-    this.crashHTTPService.loadDrivers().subscribe((res: any) => {
-      this.drivers = res['driver']
-    })
-    this.crashHTTPService.loadVRUs().subscribe((res: any) => {
-      this.VRUs = res['VRU']
-      this.addVRU(this.collisions)
-    })
-  }
-
-  public addVRU(dataset:CollisionModel[]) {
-    if (dataset.length > 0 && this.VRUs.length > 0) {
-      console.log('adding VRUs')
-      this.VRUs.forEach((VRU) => {
-        let col = dataset.filter((x) => x.mrn == VRU.mrn)
-        col.forEach((x) => x.VRU = true)
+    this.getAllIndividuals() //every refresh calls this, which is probably overfill
+    this.getCollisionsPart().then((x) => {
+      this.getJurisdictionCollisions()
+      this.getFilteredCollisions()
+      this.getTrafficChangeList()
+      this.loaded = true
+      this.sendCQL()
+      this.getCollisions().then((x) => {
+        this.getFilteredCollisions()
+        console.log('All Loaded')
       })
-  }
-}
-
-  loadCrashBoxes() {
-    this.crashHTTPService.loadCrashBoxAll().subscribe((x) => {
-      console.log(x.cbcArray)
-      this.cbc = x.cbcArray
     })
+  }
+
+  async getCollisions() {
+    console.log('getCollisions')
+    let res$ = this.sqlService.GetAll(this.moduleData.crashSchema, this.moduleData.crashTable, '', "collision_date BETWEEN '" + this.startDate.value?.toLocaleDateString() + "' AND '" + this.endDate.value?.toLocaleDateString() + "'")
+    let res = await lastValueFrom(res$)
+    this.collisions = res[0]
+    this.filteredCollisions = res[0]
+    this.listData = this.crashService.loadLists(this.listData, this.collisions)
+  }
+
+  async getCollisionsPart() { //Required because it takes so long to get the narratives
+    console.log('getCollisionsPart')
+    let res$ = this.sqlService.GetAll(this.moduleData.crashSchema, this.moduleData.crashTable, 'mrn,collision_date,collision_time,vehicles_involved,number_injured,number_dead,city,agency,construction_type,light_condition,manner_of_collision,primary_factor,road_character,roadway_junction_type,roadway_class,surface_condition,weather_conditions,kabc,cost,vru,geom', "collision_date BETWEEN '" + this.startDate.value?.toLocaleDateString() + "' AND '" + this.endDate.value?.toLocaleDateString() + "'")
+    let res = await lastValueFrom(res$)
+    this.collisions = res[0]
+    this.filteredCollisions = res[0]
+    this.listData = this.crashService.loadLists(this.listData, this.collisions)
+  }
+
+  updateJurisdiction() {
+    this.sendCQL()
+    this.getJurisdictionCollisions().then(() => {
+      this.getFilteredCollisions()
+    })
+  }
+
+  async getJurisdictionCollisions() {
+    console.log('getJurisdictionCollisions')
+    this.jurisdictionCollisions = await this.crashService.generateJurisdictionCollisions(this.collisions, this.filter)
+  }
+
+  getFilteredCollisions() {
+    console.log('getFilteredCollisions')
+    this.filteredCollisions = this.crashService.generateFilter(this.collisions, this.crashBoxCollisions, this.filter, this.startDate, this.endDate)
+    this.filter.lastDate = new Date(Math.max(...this.filteredCollisions.map(dt => this.parseDateString(dt.collision_date).valueOf())))
+    // if (this.loaded && (this.chartComponent)) { this.chartComponent.updateChart(this.filteredCollisions) }  //for some reason, this is required to make it automatic.
+    if (this.filteredCollisionsWithBoxID.length > 0) { this.loadCrashBoxes() }
+  }
+
+  getAllIndividuals() {
+    this.sqlService.GetAll(this.moduleData.individualSchema, this.moduleData.individualTable, '', `person_type IN ('PEDESTRIAN', 'PEDALCYCLIST', 'DRIVER')`).subscribe((res: any) => {
+      this.drivers = res[0].filter((x: IndividualModel) => {
+        // return (x.person_type == 'PEDESTRIAN' || x.person_type == 'PEDALCYCLIST')
+        return x.person_type == 'DRIVER'
+      })
+      this.VRUs = res[0].filter((x: IndividualModel) => {
+        return (x.person_type == 'PEDESTRIAN' || x.person_type == 'PEDALCYCLIST')
+      })
+    })
+  }
+
+  loadCrashBoxes() {  //This is more than a little messed up.  There must be a better way.
+    if (this.getLeftJoinWithinSubscription) {
+      this.getLeftJoinWithinSubscription.unsubscribe()
+      console.log('cancelling leftJoinWithin')
+    }
+    console.log('loadCrashBoxes')
+    this.sqlService.GetAll(this.moduleData.crashBoxSchema, this.moduleData.crashBoxTable, '', '').subscribe((x) => {
+      this.crashBoxes = x[0]
+      this.filteredCrashBoxes = this.crashBoxes
+      this.listData = this.crashService.loadCBLists(this.listData, this.crashBoxes)
+    })
+    this.getLeftJoinWithinSubscription = this.geoHTTPService.getLeftJoinWithin(this.moduleData.crashBoxSchema, this.moduleData.crashBoxTable, this.moduleData.crashSchema, this.moduleData.crashTable, "collision_date BETWEEN '" + this.startDate.value?.toLocaleDateString() + "' AND '" + this.endDate.value?.toLocaleDateString() + "'").subscribe((x: any) => {
+      x[0].forEach((y: any) => { y['CrashBoxID'] = y[this.moduleData.crashBoxTable + 'id'] })
+      this.collisionsWithBoxID = x[0]
+      this.filteredCollisionsWithBoxID = this.collisionsWithBoxID.filter((collision) => {
+        return (this.filteredCollisions.map((x) => x.mrn).includes(collision.mrn))
+      })
+    })
+  }
+  
+  parseDateString(dateString:string):Date {
+    const dateOnlyRegex = /^([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])))$/
+    if (dateOnlyRegex.test(dateString)) {
+      const utcDate = new Date(dateString)
+      const localDate = new Date(utcDate.getTime() + utcDate.getTimezoneOffset() * 60000)
+      return localDate  
+    }
+    return new Date(dateString)
   }
 }
